@@ -1,0 +1,90 @@
+# LXSH: Lexing & Syntax Highlighting in Lua
+
+LXSH is a collection of [lexers][lexing] and [highlighters][highlighting] written in [Lua][lua] using the excellent pattern-matching library [LPeg][lpeg]. The highlighters generate [HTML][html] designed to be easily embedded in web pages. Two programming languages are currently supported, these are Lua and C. The highlighters support three color schemes, here are some examples of both languages in every color scheme:
+
+ * **Lua:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/apr.lua.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/apr.lua.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/apr.lua.html)
+ * **C:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/lua_apr.c.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/lua_apr.c.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/lua_apr.c.html)
+
+As you can see in the above examples the highlighters replace standard library identifiers (and then some) with hyperlinks to the relevant documentation.
+
+## Installation
+
+The easiest way to download and install LXSH is using [LuaRocks][luarocks]:
+
+    $ luarocks install http://peterodding.com/code/lua/lxsh/downloads/lxsh-0.5-1.rockspec
+
+If you don't have LuaRocks installed you can [download the latest release][zipball] directly from GitHub as a ZIP archive. To install create an `lxsh` directory in your [$LUA_PATH][lua_path] and copy the contents of the `src` directory from the ZIP archive to the `lxsh` directory so that you end up with the following structure:
+
+ * `$LUA_PATH/lxsh/init.lua`
+ * `$LUA_PATH/lxsh/lexers/*.lua`
+ * `$LUA_PATH/lxsh/highlighters/*.lua`
+ * `$LUA_PATH/lxsh/colors/*.lua`
+ * `$LUA_PATH/lxsh/docs/*.lua`
+
+## Usage
+
+If you want to call a lexer or access an LPeg pattern defined by the lexer you can do so as follows (this example demonstrates the Lua lexer but the C lexer works the same):
+
+    > -- Load the lexer.
+    > lexer = require 'lxsh.lexers.lua'
+
+    > -- Run the lexer on a string of source code.
+    > for kind, text in lexer.gmatch 'i = i + 1 -- example' do
+    >>  print(kind, text)
+    >> end
+    identifier  i
+    whitespace   
+    operator    =
+    whitespace   
+    identifier  i
+    whitespace   
+    operator    +
+    whitespace   
+    number      1
+    whitespace   
+    comment     -- example
+
+    > -- Use one of the patterns defined by the lexer.
+    > lexer.patterns.comment:match '--[=[ this is a long comment ]=]'
+
+The syntax highlighters can be used as follows:
+
+    > -- Load the highlighter.
+    > highlighter = require 'lxsh.highlighters.lua'
+
+    > -- Use it to highlight some code.
+    > print(highlighter "require 'lpeg'")
+    <a href="http://www.lua.org/manual/5.1/manual.html#pdf-require" style="color: #0e7c6b; text-decoration: none">require</a>
+    <span style="color: #a8660d">'lpeg'</span><span style="color: #2239a8; font-weight: bold">;</span>
+
+You can customize the output of the highlighters by passing a table with one or more of the following options:
+
+ * `encodews`: Replace newlines with `<br>` elements and ordinary spaces with non-breaking spaces so that whitespace is preserved when the highlighted code isn't embedded in a `<pre>` block
+ * `colors`: The color scheme to use, one of the following:
+   * `require 'lxsh.colors.earendel'` based on the [Vim color scheme Earendel][earendel] by Georg Dahn (this is the default)
+   * `require 'lxsh.colors.slate'` based on the [Vim color scheme Slate][slate] by Ralph Amissah
+   * `require 'lxsh.colors.wiki'` based on the style of the [lua-users wiki][lua_wiki]
+
+## Contact
+
+If you have questions, bug reports, suggestions, etc. the author can be contacted at <peter@peterodding.com>. The latest version is available at <http://peterodding.com/code/lua/lxsh/> and <http://github.com/xolox/lua-lxsh>.
+
+## License
+
+This software is licensed under the [MIT license][mit].  
+© 2010 Peter Odding &lt;<peter@peterodding.com>&gt;.
+
+[lexing]: http://en.wikipedia.org/wiki/Lexical_analysis
+[highlighting]: http://en.wikipedia.org/wiki/Syntax_highlighting
+[lua]: http://www.lua.org/
+[lpeg]: http://www.inf.puc-rio.br/~roberto/lpeg/
+[html]: http://en.wikipedia.org/wiki/HTML
+[lua_example]: http://peterodding.com/code/lua/lxsh/examples/apr.lua.html
+[c_example]: http://peterodding.com/code/lua/lxsh/examples/lua_apr.c.html
+[luarocks]: http://www.luarocks.org/
+[zipball]: http://github.com/xolox/lua-lxsh/zipball/master
+[lua_path]: http://www.lua.org/manual/5.1/manual.html#pdf-package.path
+[earendel]: http://www.vim.org/scripts/script.php?script_id=2188
+[slate]: http://code.google.com/p/vim/source/browse/runtime/colors/slate.vim
+[lua_wiki]: http://lua-users.org/wiki/
+[mit]: http://en.wikipedia.org/wiki/MIT_License
