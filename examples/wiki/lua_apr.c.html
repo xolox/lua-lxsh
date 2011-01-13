@@ -1,0 +1,415 @@
+<html>
+<head>
+<style type="text/css">
+html, body { margin: 0; padding: 0; }
+pre { margin: 0; padding: 1em; }
+</style>
+</head>
+<body><pre style="color: #000; background-color: #FFF"><span style="color: #00A000">/* Miscellaneous functions module for the Lua/APR binding.
+ *
+ * Author: Peter Odding &lt;peter@peterodding.com&gt;
+ * Last Change: January 8, 2011
+ * Homepage: <a href="http://peterodding.com/code/lua/apr/">http://peterodding.com/code/lua/apr/</a>
+ * License: MIT
+ */</span>
+
+#include "lua_apr.h"
+#include &lt;apr_portable.h&gt;
+
+<span style="color: #00A000">/* Used to make sure that APR is only initialized once. */</span>
+<span style="color: #000080; font-weight: bold">static</span> <span style="color: #000080; font-weight: bold">int</span> apr_was_initialized = 0;
+
+<span style="color: #00A000">/* Used to locate global memory pool used by library functions. */</span>
+<span style="color: #000080; font-weight: bold">static</span> <span style="color: #000080; font-weight: bold">int</span> mp_regidx = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-LUA_NOREF" style="color: #900090; text-decoration: none">LUA_NOREF</a>;
+
+<span style="color: #00A000">/* luaopen_apr_core() initializes the binding and library. {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> luaopen_apr_core(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+  apr_status_t status;
+
+  <span style="color: #00A000">/* Table of library functions. */</span>
+  <a href="http://www.lua.org/manual/5.1/manual.html#luaL_Reg" style="color: #900090; text-decoration: none">luaL_Reg</a> functions[] = {
+
+    <span style="color: #00A000">/* lua_apr.c -- the "main" file. */</span>
+    { <span style="color: #009090">"platform_get"</span>, lua_apr_platform_get },
+    { <span style="color: #009090">"version_get"</span>, lua_apr_version_get },
+    { <span style="color: #009090">"os_default_encoding"</span>, lua_apr_os_default_encoding },
+    { <span style="color: #009090">"os_locale_encoding"</span>, lua_apr_os_locale_encoding },
+    { <span style="color: #009090">"type"</span>, lua_apr_type },
+
+    <span style="color: #00A000">/* base64.c -- base64 encoding/decoding. */</span>
+    { <span style="color: #009090">"base64_encode"</span>, lua_apr_base64_encode },
+    { <span style="color: #009090">"base64_decode"</span>, lua_apr_base64_decode },
+
+    <span style="color: #00A000">/* crypt.c -- cryptographic functions. */</span>
+    { <span style="color: #009090">"md5_init"</span>, lua_apr_md5_init },
+    { <span style="color: #009090">"md5_encode"</span>, lua_apr_md5_encode },
+    { <span style="color: #009090">"password_get"</span>, lua_apr_password_get },
+    { <span style="color: #009090">"password_validate"</span>, lua_apr_password_validate },
+    { <span style="color: #009090">"sha1_init"</span>, lua_apr_sha1_init },
+
+    <span style="color: #00A000">/* date.c -- date parsing. */</span>
+    { <span style="color: #009090">"date_parse_http"</span>, lua_apr_date_parse_http },
+    { <span style="color: #009090">"date_parse_rfc"</span>, lua_apr_date_parse_rfc },
+
+    <span style="color: #00A000">/* dbm.c -- dbm routines. */</span>
+    { <span style="color: #009090">"dbm_open"</span>, lua_apr_dbm_open },
+    { <span style="color: #009090">"dbm_getnames"</span>, lua_apr_dbm_getnames },
+
+    <span style="color: #00A000">/* env.c -- environment variable handling. */</span>
+    { <span style="color: #009090">"env_get"</span>, lua_apr_env_get },
+    { <span style="color: #009090">"env_set"</span>, lua_apr_env_set },
+    { <span style="color: #009090">"env_delete"</span>, lua_apr_env_delete },
+
+    <span style="color: #00A000">/* filepath.c -- filepath manipulation. */</span>
+    { <span style="color: #009090">"filepath_root"</span>, lua_apr_filepath_root },
+    { <span style="color: #009090">"filepath_parent"</span>, lua_apr_filepath_parent },
+    { <span style="color: #009090">"filepath_name"</span>, lua_apr_filepath_name },
+    { <span style="color: #009090">"filepath_merge"</span>, lua_apr_filepath_merge },
+    { <span style="color: #009090">"filepath_list_split"</span>, lua_apr_filepath_list_split },
+    { <span style="color: #009090">"filepath_list_merge"</span>, lua_apr_filepath_list_merge },
+    { <span style="color: #009090">"filepath_get"</span>, lua_apr_filepath_get },
+    { <span style="color: #009090">"filepath_set"</span>, lua_apr_filepath_set },
+
+    <span style="color: #00A000">/* fnmatch.c -- filename matching. */</span>
+    { <span style="color: #009090">"fnmatch"</span>, lua_apr_fnmatch },
+    { <span style="color: #009090">"fnmatch_test"</span>, lua_apr_fnmatch_test },
+
+    <span style="color: #00A000">/* io_dir.c -- directory manipulation. */</span>
+    { <span style="color: #009090">"temp_dir_get"</span>, lua_apr_temp_dir_get },
+    { <span style="color: #009090">"dir_make"</span>, lua_apr_dir_make },
+    { <span style="color: #009090">"dir_make_recursive"</span>, lua_apr_dir_make_recursive },
+    { <span style="color: #009090">"dir_remove"</span>, lua_apr_dir_remove },
+    { <span style="color: #009090">"dir_remove_recursive"</span>, lua_apr_dir_remove_recursive },
+    { <span style="color: #009090">"dir_open"</span>, lua_apr_dir_open },
+
+    <span style="color: #00A000">/* io_file.c -- file i/o handling. */</span>
+#   if APR_MAJOR_VERSION &gt; 1 || (APR_MAJOR_VERSION == 1 &amp;&amp; APR_MINOR_VERSION &gt;= 4)
+    { <span style="color: #009090">"file_link"</span>, lua_apr_file_link },
+#   endif
+    { <span style="color: #009090">"file_copy"</span>, lua_apr_file_copy },
+    { <span style="color: #009090">"file_append"</span>, lua_apr_file_append },
+    { <span style="color: #009090">"file_rename"</span>, lua_apr_file_rename },
+    { <span style="color: #009090">"file_remove"</span>, lua_apr_file_remove },
+    { <span style="color: #009090">"file_mtime_set"</span>, lua_apr_file_mtime_set },
+    { <span style="color: #009090">"file_attrs_set"</span>, lua_apr_file_attrs_set },
+    { <span style="color: #009090">"file_perms_set"</span>, lua_apr_file_perms_set },
+    { <span style="color: #009090">"stat"</span>, lua_apr_stat },
+    { <span style="color: #009090">"file_open"</span>, lua_apr_file_open },
+
+    <span style="color: #00A000">/* io_net.c -- network i/o handling. */</span>
+    { <span style="color: #009090">"socket_create"</span>, lua_apr_socket_create },
+    { <span style="color: #009090">"hostname_get"</span>, lua_apr_hostname_get },
+    { <span style="color: #009090">"host_to_addr"</span>, lua_apr_host_to_addr },
+    { <span style="color: #009090">"addr_to_host"</span>, lua_apr_addr_to_host },
+
+    <span style="color: #00A000">/* io_pipe.c -- pipe i/o handling. */</span>
+    { <span style="color: #009090">"pipe_open_stdin"</span>, lua_apr_pipe_open_stdin },
+    { <span style="color: #009090">"pipe_open_stdout"</span>, lua_apr_pipe_open_stdout },
+    { <span style="color: #009090">"pipe_open_stderr"</span>, lua_apr_pipe_open_stderr },
+    { <span style="color: #009090">"namedpipe_create"</span>, lua_apr_namedpipe_create },
+    { <span style="color: #009090">"pipe_create"</span>, lua_apr_pipe_create },
+
+    <span style="color: #00A000">/* proc -- process handling. */</span>
+    { <span style="color: #009090">"proc_create"</span>, lua_apr_proc_create },
+    { <span style="color: #009090">"proc_detach"</span>, lua_apr_proc_detach },
+#   if APR_HAS_FORK
+    { <span style="color: #009090">"proc_fork"</span>, lua_apr_proc_fork },
+#   endif
+
+    <span style="color: #00A000">/* str.c -- string handling. */</span>
+    { <span style="color: #009090">"strnatcmp"</span>, lua_apr_strnatcmp },
+    { <span style="color: #009090">"strnatcasecmp"</span>, lua_apr_strnatcasecmp },
+    { <span style="color: #009090">"strfsize"</span>, lua_apr_strfsize },
+    { <span style="color: #009090">"tokenize_to_argv"</span>, lua_apr_tokenize_to_argv },
+
+    <span style="color: #00A000">/* time.c -- time management */</span>
+    { <span style="color: #009090">"sleep"</span>, lua_apr_sleep },
+    { <span style="color: #009090">"time_now"</span>, lua_apr_time_now },
+    { <span style="color: #009090">"time_explode"</span>, lua_apr_time_explode },
+    { <span style="color: #009090">"time_implode"</span>, lua_apr_time_implode },
+    { <span style="color: #009090">"time_format"</span>, lua_apr_time_format },
+
+    <span style="color: #00A000">/* uri.c -- URI parsing/unparsing. */</span>
+    { <span style="color: #009090">"uri_parse"</span>, lua_apr_uri_parse },
+    { <span style="color: #009090">"uri_unparse"</span>, lua_apr_uri_unparse },
+    { <span style="color: #009090">"uri_port_of_scheme"</span>, lua_apr_uri_port_of_scheme },
+
+    <span style="color: #00A000">/* user.c -- user/group identification. */</span>
+    { <span style="color: #009090">"user_get"</span>, lua_apr_user_get },
+    { <span style="color: #009090">"user_homepath_get"</span>, lua_apr_user_homepath_get },
+
+    <span style="color: #00A000">/* uuid.c -- UUID generation. */</span>
+    { <span style="color: #009090">"uuid_get"</span>, lua_apr_uuid_get },
+    { <span style="color: #009090">"uuid_format"</span>, lua_apr_uuid_format },
+    { <span style="color: #009090">"uuid_parse"</span>, lua_apr_uuid_parse },
+
+    <span style="color: #00A000">/* xlate.c -- character encoding translation. */</span>
+    { <span style="color: #009090">"xlate"</span>, lua_apr_xlate },
+
+    { NULL, NULL }
+  };
+
+  <span style="color: #00A000">/* Initialize the library (only once per process). */</span>
+  <span style="color: #000080; font-weight: bold">if</span> (!apr_was_initialized) {
+    <span style="color: #000080; font-weight: bold">if</span> ((status = apr_initialize()) != APR_SUCCESS)
+      raise_error_status(L, status);
+    <span style="color: #000080; font-weight: bold">if</span> (<a href="http://linux.die.net/man/3/atexit" style="color: #900090; text-decoration: none">atexit</a>(apr_terminate) != 0)
+      raise_error_message(L, <span style="color: #009090">"Lua/APR: Failed to register apr_terminate()"</span>);
+    apr_was_initialized = 1;
+ }
+
+  <span style="color: #00A000">/* Create the table of global functions. */</span>
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_createtable" style="color: #900090; text-decoration: none">lua_createtable</a>(L, 0, count(functions));
+  <a href="http://www.lua.org/manual/5.1/manual.html#luaL_register" style="color: #900090; text-decoration: none">luaL_register</a>(L, NULL, functions);
+
+  <span style="color: #00A000">/* Let callers of process:user_set() know whether it requires a password. */</span>
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushboolean" style="color: #900090; text-decoration: none">lua_pushboolean</a>(L, APR_PROCATTR_USER_SET_REQUIRES_PASSWORD);
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_setfield" style="color: #900090; text-decoration: none">lua_setfield</a>(L, -2, <span style="color: #009090">"user_set_requires_password"</span>);
+
+  <span style="color: #00A000">/* Let callers of apr.socket_create() know whether it supports IPv6. */</span>
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushboolean" style="color: #900090; text-decoration: none">lua_pushboolean</a>(L, APR_HAVE_IPV6);
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_setfield" style="color: #900090; text-decoration: none">lua_setfield</a>(L, -2, <span style="color: #009090">"socket_supports_ipv6"</span>);
+
+  <span style="color: #000080; font-weight: bold">return</span> 1;
+}
+
+<span style="color: #00A000">/* apr.platform_get() -&gt; name {{{1
+ * 
+ * Get the name of the platform for which the Lua/APR binding was compiled.
+ * Returns one of the following strings:
+ *
+ *  - `'UNIX'`
+ *  - `'WIN32'`
+ *  - `'NETWARE'`
+ *  - `'OS2'`
+ *
+ * Please note that the labels returned by `apr.platform_get()` don't imply
+ * that these platforms are fully supported; the author of the Lua/APR binding
+ * doesn't have NETWARE and OS2 environments available for testing.
+ */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> lua_apr_platform_get(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+# if defined(WIN32)
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, <span style="color: #009090">"WIN32"</span>);
+# elif defined(NETWARE)
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, <span style="color: #009090">"NETWARE"</span>);
+# elif defined(OS2)
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, <span style="color: #009090">"OS2"</span>);
+# else
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, <span style="color: #009090">"UNIX"</span>);
+# endif
+  <span style="color: #000080; font-weight: bold">return</span> 1;
+}
+
+<span style="color: #00A000">/* apr.version_get() -&gt; apr_version, apu_version {{{1
+ *
+ * Get the version numbers of the Apache Portable Runtime and its utility
+ * library as strings. Each string contains three numbers separated by dots.
+ * The numbers have the following meaning:
+ *
+ *  - The 1st number is used for major [API] [api] changes that can cause
+ *    compatibility problems between the Lua/APR binding and the APR and
+ *    APR-util libraries
+ *  - The 2nd number is used for minor API changes that shouldn't impact
+ *    existing functionality in the Lua/APR binding
+ *  - The 3rd number is used exclusively for bug fixes
+ *
+ * This function can be useful when you want to know whether a certain bug fix
+ * has been applied to APR and/or APR-util or if you want to report a bug in
+ * APR, APR-util or the Lua/APR binding.
+ *
+ * If you're looking for the version of the Lua/APR binding you can use the
+ * `apr._VERSION` string, but note that Lua/APR currently does not use the
+ * above versioning rules.
+ *
+ * [api]: <a href="http://en.wikipedia.org/wiki/Application_programming_interface">http://en.wikipedia.org/wiki/Application_programming_interface</a>
+ */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> lua_apr_version_get(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, apr_version_string());
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, apu_version_string());
+  <span style="color: #000080; font-weight: bold">return</span> 2;
+}
+
+<span style="color: #00A000">/* apr.os_default_encoding() -&gt; name {{{1
+ *
+ * Get the name of the system default character set as a string.
+ */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> lua_apr_os_default_encoding(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, apr_os_default_encoding(to_pool(L)));
+  <span style="color: #000080; font-weight: bold">return</span> 1;
+}
+
+<span style="color: #00A000">/* apr.os_locale_encoding() -&gt; name {{{1
+ *
+ * Get the name of the current locale character set as a string. If the current
+ * locale's data cannot be retrieved on this system, the name of the system
+ * default character set is returned instead.
+ */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> lua_apr_os_locale_encoding(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, apr_os_locale_encoding(to_pool(L)));
+  <span style="color: #000080; font-weight: bold">return</span> 1;
+}
+
+<span style="color: #00A000">/* apr.type(object) -&gt; name {{{1
+ *
+ * Return the type of a userdata value as a string. If @object is of a known
+ * type one of the strings `'file'`, `'directory'`, `'socket'`, `'process'` or
+ * `'dbm'` will be returned, otherwise nothing is returned.
+ */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> lua_apr_type(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+  lua_apr_objtype *types[] = {
+    &amp;lua_apr_file_type,
+    &amp;lua_apr_dir_type,
+    &amp;lua_apr_socket_type,
+    &amp;lua_apr_proc_type,
+    &amp;lua_apr_dbm_type
+  };
+  <span style="color: #000080; font-weight: bold">int</span> i;
+
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_settop" style="color: #900090; text-decoration: none">lua_settop</a>(L, 1);
+  <a href="http://www.lua.org/manual/5.1/manual.html#luaL_checktype" style="color: #900090; text-decoration: none">luaL_checktype</a>(L, 1, LUA_TUSERDATA);
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_getmetatable" style="color: #900090; text-decoration: none">lua_getmetatable</a>(L, 1);
+
+  <span style="color: #000080; font-weight: bold">for</span> (i = 0; i &lt; count(types); i++) {
+    get_metatable(L, types[i]);
+    <span style="color: #000080; font-weight: bold">if</span> (<a href="http://www.lua.org/manual/5.1/manual.html#lua_rawequal" style="color: #900090; text-decoration: none">lua_rawequal</a>(L, 2, 3)) {
+      <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, types[i]-&gt;friendlyname);
+      <span style="color: #000080; font-weight: bold">return</span> 1;
+    }
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pop" style="color: #900090; text-decoration: none">lua_pop</a>(L, 1);
+  }
+
+  <span style="color: #000080; font-weight: bold">return</span> 0;
+}
+
+<span style="color: #00A000">/* to_pool() returns the global memory pool from the registry. {{{1 */</span>
+
+apr_pool_t *to_pool(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L)
+{
+  apr_pool_t *memory_pool;
+  apr_status_t status;
+
+  <a href="http://www.lua.org/manual/5.1/manual.html#luaL_checkstack" style="color: #900090; text-decoration: none">luaL_checkstack</a>(L, 1, <span style="color: #009090">"not enough stack space to get memory pool"</span>);
+
+  <span style="color: #000080; font-weight: bold">if</span> (mp_regidx == <a href="http://www.lua.org/manual/5.1/manual.html#pdf-LUA_NOREF" style="color: #900090; text-decoration: none">LUA_NOREF</a>) {
+    status = apr_pool_create(&amp;memory_pool, NULL);
+    <span style="color: #000080; font-weight: bold">if</span> (status != APR_SUCCESS)
+      raise_error_status(L, status);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushlightuserdata" style="color: #900090; text-decoration: none">lua_pushlightuserdata</a>(L, memory_pool);
+    mp_regidx = <a href="http://www.lua.org/manual/5.1/manual.html#luaL_ref" style="color: #900090; text-decoration: none">luaL_ref</a>(L, <a href="http://www.lua.org/manual/5.1/manual.html#pdf-LUA_REGISTRYINDEX" style="color: #900090; text-decoration: none">LUA_REGISTRYINDEX</a>);
+  } <span style="color: #000080; font-weight: bold">else</span> {
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_rawgeti" style="color: #900090; text-decoration: none">lua_rawgeti</a>(L, <a href="http://www.lua.org/manual/5.1/manual.html#pdf-LUA_REGISTRYINDEX" style="color: #900090; text-decoration: none">LUA_REGISTRYINDEX</a>, mp_regidx);
+    memory_pool = <a href="http://www.lua.org/manual/5.1/manual.html#lua_touserdata" style="color: #900090; text-decoration: none">lua_touserdata</a>(L, -1);
+    apr_pool_clear(memory_pool);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pop" style="color: #900090; text-decoration: none">lua_pop</a>(L, 1);
+  }
+
+  <span style="color: #000080; font-weight: bold">return</span> memory_pool;
+}
+
+<span style="color: #00A000">/* status_to_message() converts APR status codes to error messages. {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> status_to_message(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L, apr_status_t status)
+{
+  <span style="color: #000080; font-weight: bold">char</span> message[512];
+  apr_strerror(status, message, count(message));
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushstring" style="color: #900090; text-decoration: none">lua_pushstring</a>(L, message);
+  <span style="color: #000080; font-weight: bold">return</span> 1;
+}
+
+<span style="color: #00A000">/* push_status() returns true for APR_SUCCESS or the result of status_to_message(). {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> push_status(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L, apr_status_t status)
+{
+  <span style="color: #000080; font-weight: bold">if</span> (status == APR_SUCCESS) {
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushboolean" style="color: #900090; text-decoration: none">lua_pushboolean</a>(L, 1);
+    <span style="color: #000080; font-weight: bold">return</span> 1;
+  } <span style="color: #000080; font-weight: bold">else</span> {
+    <span style="color: #000080; font-weight: bold">return</span> push_error_status(L, status);
+  }
+}
+
+<span style="color: #00A000">/* push_error_status() converts APR status codes to (nil, message, code). {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> push_error_status(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L, apr_status_t status)
+{
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushnil" style="color: #900090; text-decoration: none">lua_pushnil</a>(L);
+  status_to_message(L, status);
+  status_to_name(L, status);
+  <span style="color: #000080; font-weight: bold">return</span> 3;
+}
+
+<span style="color: #00A000">/* new_object() allocates userdata of the given type. {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">void</span> *new_object(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L, lua_apr_objtype *T)
+{
+  <span style="color: #000080; font-weight: bold">void</span> *object;
+
+  object = <a href="http://www.lua.org/manual/5.1/manual.html#lua_newuserdata" style="color: #900090; text-decoration: none">lua_newuserdata</a>(L, T-&gt;objsize);
+  <span style="color: #000080; font-weight: bold">if</span> (object != NULL) {
+    <a href="http://linux.die.net/man/3/memset" style="color: #900090; text-decoration: none">memset</a>(object, 0, T-&gt;objsize);
+    get_metatable(L, T);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_setmetatable" style="color: #900090; text-decoration: none">lua_setmetatable</a>(L, -2);
+    getdefaultenv(L);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_setfenv" style="color: #900090; text-decoration: none">lua_setfenv</a>(L, -2);
+  }
+  <span style="color: #000080; font-weight: bold">return</span> object;
+}
+
+<span style="color: #000080; font-weight: bold">void</span> getdefaultenv(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L) <span style="color: #00A000">/* {{{1 */</span>
+{
+  <span style="color: #000080; font-weight: bold">const</span> <span style="color: #000080; font-weight: bold">char</span> *key = <span style="color: #009090">"Lua/APR default environment for userdata"</span>;
+
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_getfield" style="color: #900090; text-decoration: none">lua_getfield</a>(L, <a href="http://www.lua.org/manual/5.1/manual.html#pdf-LUA_REGISTRYINDEX" style="color: #900090; text-decoration: none">LUA_REGISTRYINDEX</a>, key);
+  <span style="color: #000080; font-weight: bold">if</span> (!<a href="http://www.lua.org/manual/5.1/manual.html#lua_istable" style="color: #900090; text-decoration: none">lua_istable</a>(L, -1)) {
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pop" style="color: #900090; text-decoration: none">lua_pop</a>(L, 1);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_newtable" style="color: #900090; text-decoration: none">lua_newtable</a>(L);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pushvalue" style="color: #900090; text-decoration: none">lua_pushvalue</a>(L, -1);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_setfield" style="color: #900090; text-decoration: none">lua_setfield</a>(L, <a href="http://www.lua.org/manual/5.1/manual.html#pdf-LUA_REGISTRYINDEX" style="color: #900090; text-decoration: none">LUA_REGISTRYINDEX</a>, key);
+  }
+}
+
+<span style="color: #00A000">/* check_object() validates objects created by new_object(). {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">void</span> *check_object(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L, <span style="color: #000080; font-weight: bold">int</span> idx, lua_apr_objtype *T)
+{
+  <span style="color: #000080; font-weight: bold">int</span> valid = 0;
+  get_metatable(L, T);
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_getmetatable" style="color: #900090; text-decoration: none">lua_getmetatable</a>(L, idx);
+  valid = <a href="http://www.lua.org/manual/5.1/manual.html#lua_rawequal" style="color: #900090; text-decoration: none">lua_rawequal</a>(L, -1, -2);
+  <a href="http://www.lua.org/manual/5.1/manual.html#lua_pop" style="color: #900090; text-decoration: none">lua_pop</a>(L, 2);
+  <span style="color: #000080; font-weight: bold">if</span> (valid)
+    <span style="color: #000080; font-weight: bold">return</span> <a href="http://www.lua.org/manual/5.1/manual.html#lua_touserdata" style="color: #900090; text-decoration: none">lua_touserdata</a>(L, idx);
+  <a href="http://www.lua.org/manual/5.1/manual.html#luaL_typerror" style="color: #900090; text-decoration: none">luaL_typerror</a>(L, idx, T-&gt;typename);
+  <span style="color: #000080; font-weight: bold">return</span> NULL;
+}
+
+<span style="color: #00A000">/* get_metatable() returns the metatable for the given type. {{{1 */</span>
+
+<span style="color: #000080; font-weight: bold">int</span> get_metatable(<a href="http://www.lua.org/manual/5.1/manual.html#lua_State" style="color: #900090; text-decoration: none">lua_State</a> *L, lua_apr_objtype *T)
+{
+  <a href="http://www.lua.org/manual/5.1/manual.html#luaL_getmetatable" style="color: #900090; text-decoration: none">luaL_getmetatable</a>(L, T-&gt;typename);
+  <span style="color: #000080; font-weight: bold">if</span> (<a href="http://www.lua.org/manual/5.1/manual.html#lua_type" style="color: #900090; text-decoration: none">lua_type</a>(L, -1) != LUA_TTABLE) {
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_pop" style="color: #900090; text-decoration: none">lua_pop</a>(L, 1);
+    <a href="http://www.lua.org/manual/5.1/manual.html#luaL_newmetatable" style="color: #900090; text-decoration: none">luaL_newmetatable</a>(L, T-&gt;typename);
+    <a href="http://www.lua.org/manual/5.1/manual.html#luaL_register" style="color: #900090; text-decoration: none">luaL_register</a>(L, NULL, T-&gt;metamethods);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_newtable" style="color: #900090; text-decoration: none">lua_newtable</a>(L);
+    <a href="http://www.lua.org/manual/5.1/manual.html#luaL_register" style="color: #900090; text-decoration: none">luaL_register</a>(L, NULL, T-&gt;methods);
+    <a href="http://www.lua.org/manual/5.1/manual.html#lua_setfield" style="color: #900090; text-decoration: none">lua_setfield</a>(L, -2, <span style="color: #009090">"__index"</span>);
+  }
+  <span style="color: #000080; font-weight: bold">return</span> 1;
+}
+
+<span style="color: #00A000">/* vim: set ts=2 sw=2 et tw=79 fen fdm=marker : */</span>
+</pre></body></html>

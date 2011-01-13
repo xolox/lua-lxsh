@@ -1,0 +1,182 @@
+<html>
+<head>
+<style type="text/css">
+html, body { margin: 0; padding: 0; }
+pre { margin: 0; padding: 1em; }
+</style>
+</head>
+<body><pre style="color: #000; background-color: #FFF"><span style="color: #00A000">--[[
+
+ Lua source code for the Lua/APR binding.
+
+ Author: Peter Odding &lt;peter@peterodding.com&gt;
+ Last Change: January 8, 2011
+ Homepage: <a href="http://peterodding.com/code/lua/apr/">http://peterodding.com/code/lua/apr/</a>
+ License: MIT
+ Version: 0.9.29
+
+ This Lua script is executed on require("apr"), loads the binary module using
+ require("apr.core"), defines several library functions implemented on top of
+ the binary module and returns the module table as the result of require().
+
+--]]</span>
+
+<span style="color: #000080; font-weight: bold">local</span> apr = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-require" style="color: #900090; text-decoration: none">require</a> <span style="color: #009090">'apr.core'</span>
+apr._VERSION = <span style="color: #009090">'0.9.29'</span>
+
+<span style="color: #00A000">-- apr.md5(input [, binary]) -&gt; digest {{{1
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Calculate the [MD5] [md5] message digest of the string @input. On success
+</span><span style="color: #00A000">-- the digest is returned as a string of 32 hexadecimal characters, or a string
+</span><span style="color: #00A000">-- of 16 bytes if @binary evaluates to true. Otherwise a nil followed by an
+</span><span style="color: #00A000">-- error message is returned.
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- *This function is binary safe.*
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Part of the "Cryptography routines" module.
+</span>
+<span style="color: #000080; font-weight: bold">function</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.md5" style="color: #900090; text-decoration: none">apr.md5</a>(input, binary)
+  <a href="http://www.lua.org/manual/5.1/manual.html#pdf-assert" style="color: #900090; text-decoration: none">assert</a>(<a href="http://www.lua.org/manual/5.1/manual.html#pdf-type" style="color: #900090; text-decoration: none">type</a>(input) == <span style="color: #009090">'string'</span>, <span style="color: #009090">"bad argument #1 to apr.md5() (string expected)"</span>)
+  <span style="color: #000080; font-weight: bold">local</span> context, digest, status, errmsg, errcode
+  context, errmsg, errcode = <a href="http://peterodding.com/code/lua/apr/docs/#apr.md5_init" style="color: #900090; text-decoration: none">apr.md5_init</a>()
+  <span style="color: #000080; font-weight: bold">if</span> context <span style="color: #000080; font-weight: bold">then</span>
+    status, errmsg, errcode = context:update(input)
+    <span style="color: #000080; font-weight: bold">if</span> status <span style="color: #000080; font-weight: bold">then</span>
+      digest, errmsg, errcode = context:digest(binary)
+      <span style="color: #000080; font-weight: bold">if</span> digest <span style="color: #000080; font-weight: bold">then</span> <span style="color: #000080; font-weight: bold">return</span> digest <span style="color: #000080; font-weight: bold">end</span>
+    <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">return</span> <span style="color: #009090">nil</span>, errmsg, errcode
+<span style="color: #000080; font-weight: bold">end</span>
+
+<span style="color: #00A000">-- apr.sha1(input [, binary]) -&gt; digest {{{1
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Calculate the [SHA1] [sha1] message digest of the string @input. On success
+</span><span style="color: #00A000">-- the digest is returned as a string of 40 hexadecimal characters, or a string
+</span><span style="color: #00A000">-- of 20 bytes if @binary evaluates to true. Otherwise a nil followed by an
+</span><span style="color: #00A000">-- error message is returned.
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- *This function is binary safe.*
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Part of the "Cryptography routines" module.
+</span>
+<span style="color: #000080; font-weight: bold">function</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.sha1" style="color: #900090; text-decoration: none">apr.sha1</a>(input, binary)
+  <a href="http://www.lua.org/manual/5.1/manual.html#pdf-assert" style="color: #900090; text-decoration: none">assert</a>(<a href="http://www.lua.org/manual/5.1/manual.html#pdf-type" style="color: #900090; text-decoration: none">type</a>(input) == <span style="color: #009090">'string'</span>, <span style="color: #009090">"bad argument #1 to apr.sha1() (string expected)"</span>)
+  <span style="color: #000080; font-weight: bold">local</span> context, digest, status, errmsg, errcode
+  context, errmsg, errcode = <a href="http://peterodding.com/code/lua/apr/docs/#apr.sha1_init" style="color: #900090; text-decoration: none">apr.sha1_init</a>()
+  <span style="color: #000080; font-weight: bold">if</span> context <span style="color: #000080; font-weight: bold">then</span>
+    status, errmsg, errcode = context:update(input)
+    <span style="color: #000080; font-weight: bold">if</span> status <span style="color: #000080; font-weight: bold">then</span>
+      digest, errmsg, errcode = context:digest(binary)
+      <span style="color: #000080; font-weight: bold">if</span> digest <span style="color: #000080; font-weight: bold">then</span> <span style="color: #000080; font-weight: bold">return</span> digest <span style="color: #000080; font-weight: bold">end</span>
+    <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">return</span> <span style="color: #009090">nil</span>, errmsg, errcode
+<span style="color: #000080; font-weight: bold">end</span>
+
+<span style="color: #00A000">-- apr.filepath_which(program [, find_all]) -&gt; pathname {{{1
+</span><span style="color: #00A000">-- 
+</span><span style="color: #00A000">-- Find the full pathname of @program by searching the directories in the
+</span><span style="color: #00A000">-- [$PATH] [path_var] environment variable and return the pathname of the
+</span><span style="color: #00A000">-- first program that's found. If @find_all is true then a list with the
+</span><span style="color: #00A000">-- pathnames of all matching programs is returned instead.
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- [path_var]: <a href="http://en.wikipedia.org/wiki/PATH_%28variable%29">http://en.wikipedia.org/wiki/PATH_%28variable%29</a>
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Part of the "File path manipulation" module.
+</span>
+<span style="color: #000080; font-weight: bold">function</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.filepath_which" style="color: #900090; text-decoration: none">apr.filepath_which</a>(program, find_all)
+  <span style="color: #000080; font-weight: bold">local</span> split = <a href="http://peterodding.com/code/lua/apr/docs/#apr.filepath_list_split" style="color: #900090; text-decoration: none">apr.filepath_list_split</a>
+  <span style="color: #000080; font-weight: bold">local</span> is_windows = <a href="http://peterodding.com/code/lua/apr/docs/#apr.platform_get" style="color: #900090; text-decoration: none">apr.platform_get</a>() == <span style="color: #009090">'WIN32'</span>
+  <span style="color: #000080; font-weight: bold">local</span> extensions = is_windows and split(<a href="http://peterodding.com/code/lua/apr/docs/#apr.env_get" style="color: #900090; text-decoration: none">apr.env_get</a> <span style="color: #009090">'PATHEXT'</span>)
+  <span style="color: #000080; font-weight: bold">local</span> results = find_all and {}
+  <span style="color: #000080; font-weight: bold">for</span> _, directory <span style="color: #000080; font-weight: bold">in</span> <a href="http://www.lua.org/manual/5.1/manual.html#pdf-ipairs" style="color: #900090; text-decoration: none">ipairs</a>(split(<a href="http://peterodding.com/code/lua/apr/docs/#apr.env_get" style="color: #900090; text-decoration: none">apr.env_get</a> <span style="color: #009090">'PATH'</span>)) <span style="color: #000080; font-weight: bold">do</span>
+    <span style="color: #000080; font-weight: bold">local</span> candidate = <a href="http://peterodding.com/code/lua/apr/docs/#apr.filepath_merge" style="color: #900090; text-decoration: none">apr.filepath_merge</a>(directory, program)
+    <span style="color: #000080; font-weight: bold">if</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.stat" style="color: #900090; text-decoration: none">apr.stat</a>(candidate, <span style="color: #009090">'type'</span>) == <span style="color: #009090">'file'</span> <span style="color: #000080; font-weight: bold">then</span>
+      <span style="color: #00A000">-- <span style="background: #ffff00">TODO</span> if not is_windows check executable bits
+</span>      <span style="color: #000080; font-weight: bold">if</span> not find_all <span style="color: #000080; font-weight: bold">then</span> <span style="color: #000080; font-weight: bold">return</span> candidate <span style="color: #000080; font-weight: bold">end</span>
+      results[#results + 1] = candidate
+    <span style="color: #000080; font-weight: bold">end</span>
+    <span style="color: #000080; font-weight: bold">if</span> is_windows and #extensions &gt;= 1 <span style="color: #000080; font-weight: bold">then</span>
+      <span style="color: #000080; font-weight: bold">for</span> _, extension <span style="color: #000080; font-weight: bold">in</span> <a href="http://www.lua.org/manual/5.1/manual.html#pdf-ipairs" style="color: #900090; text-decoration: none">ipairs</a>(extensions) <span style="color: #000080; font-weight: bold">do</span>
+        candidate = <a href="http://peterodding.com/code/lua/apr/docs/#apr.filepath_merge" style="color: #900090; text-decoration: none">apr.filepath_merge</a>(directory, program .. <span style="color: #009090">'.'</span> .. extension)
+        <span style="color: #000080; font-weight: bold">if</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.stat" style="color: #900090; text-decoration: none">apr.stat</a>(candidate, <span style="color: #009090">'type'</span>) == <span style="color: #009090">'file'</span> <span style="color: #000080; font-weight: bold">then</span>
+          <span style="color: #000080; font-weight: bold">if</span> not find_all <span style="color: #000080; font-weight: bold">then</span> <span style="color: #000080; font-weight: bold">return</span> candidate <span style="color: #000080; font-weight: bold">end</span>
+          results[#results + 1] = candidate
+        <span style="color: #000080; font-weight: bold">end</span>
+      <span style="color: #000080; font-weight: bold">end</span>
+    <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">return</span> results
+<span style="color: #000080; font-weight: bold">end</span>
+
+<span style="color: #00A000">-- apr.glob(pattern [, ignorecase]) -&gt; iterator {{{1
+</span><span style="color: #00A000">-- 
+</span><span style="color: #00A000">-- Split @pattern into a directory path and a filename pattern and return an
+</span><span style="color: #00A000">-- iterator which returns all filenames in the directory that match the
+</span><span style="color: #00A000">-- extracted filename pattern. The `apr.fnmatch()` function is used for
+</span><span style="color: #00A000">-- filename matching so the documentation there applies.
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- *This function is not binary safe.*
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Part of the "Filename matching" module.
+</span>
+<span style="color: #000080; font-weight: bold">function</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.glob" style="color: #900090; text-decoration: none">apr.glob</a>(pattern, ignorecase)
+  <span style="color: #000080; font-weight: bold">local</span> fnmatch = <a href="http://peterodding.com/code/lua/apr/docs/#apr.fnmatch" style="color: #900090; text-decoration: none">apr.fnmatch</a>
+  <span style="color: #000080; font-weight: bold">local</span> yield = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-coroutine.yield" style="color: #900090; text-decoration: none">coroutine.yield</a>
+  <span style="color: #000080; font-weight: bold">local</span> directory, pattern = <a href="http://peterodding.com/code/lua/apr/docs/#apr.filepath_parent" style="color: #900090; text-decoration: none">apr.filepath_parent</a>(pattern)
+  <span style="color: #000080; font-weight: bold">local</span> handle = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-assert" style="color: #900090; text-decoration: none">assert</a>(<a href="http://peterodding.com/code/lua/apr/docs/#apr.dir_open" style="color: #900090; text-decoration: none">apr.dir_open</a>(directory))
+  <span style="color: #000080; font-weight: bold">return</span> <a href="http://www.lua.org/manual/5.1/manual.html#pdf-coroutine.wrap" style="color: #900090; text-decoration: none">coroutine.wrap</a>(<span style="color: #000080; font-weight: bold">function</span>()
+    <span style="color: #000080; font-weight: bold">for</span> path, name <span style="color: #000080; font-weight: bold">in</span> handle:entries(<span style="color: #009090">'path'</span>, <span style="color: #009090">'name'</span>) <span style="color: #000080; font-weight: bold">do</span>
+      <span style="color: #000080; font-weight: bold">if</span> fnmatch(pattern, name, ignorecase) <span style="color: #000080; font-weight: bold">then</span>
+        yield(path)
+      <span style="color: #000080; font-weight: bold">end</span>
+    <span style="color: #000080; font-weight: bold">end</span>
+    handle:close()
+  <span style="color: #000080; font-weight: bold">end</span>)
+<span style="color: #000080; font-weight: bold">end</span>
+
+<span style="color: #00A000">-- apr.uri_encode(string) -&gt; encoded {{{1
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Encode all unsafe bytes in @string using [percent-encoding] [percenc] so
+</span><span style="color: #00A000">-- that the string can be embedded in a [URI] [uri] query string.
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- [percenc]: <a href="http://en.wikipedia.org/wiki/Percent-encoding">http://en.wikipedia.org/wiki/Percent-encoding</a>
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Part of the "Uniform resource identifier parsing" module.
+</span>
+<span style="color: #000080; font-weight: bold">function</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.uri_encode" style="color: #900090; text-decoration: none">apr.uri_encode</a>(s)
+  <span style="color: #000080; font-weight: bold">local</span> byte = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-string.byte" style="color: #900090; text-decoration: none">string.byte</a>
+  <span style="color: #000080; font-weight: bold">local</span> format = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-string.format" style="color: #900090; text-decoration: none">string.format</a>
+  <span style="color: #000080; font-weight: bold">return</span> (s:gsub(<span style="color: #009090">'[^A-Za-z0-9_.-]'</span>, <span style="color: #000080; font-weight: bold">function</span>(c)
+    <span style="color: #000080; font-weight: bold">if</span> c == <span style="color: #009090">' '</span> <span style="color: #000080; font-weight: bold">then</span>
+      <span style="color: #000080; font-weight: bold">return</span> <span style="color: #009090">'+'</span>
+    <span style="color: #000080; font-weight: bold">else</span>
+      <span style="color: #000080; font-weight: bold">return</span> format(<span style="color: #009090">'%%%02x'</span>, byte(c))
+    <span style="color: #000080; font-weight: bold">end</span>
+  <span style="color: #000080; font-weight: bold">end</span>))
+<span style="color: #000080; font-weight: bold">end</span>
+
+<span style="color: #00A000">-- apr.uri_decode(encoded) -&gt; string {{{1
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Decode all [percent-encoded] [percenc] bytes in the string @encoded.
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- [percenc]: <a href="http://en.wikipedia.org/wiki/Percent-encoding">http://en.wikipedia.org/wiki/Percent-encoding</a>
+</span><span style="color: #00A000">--
+</span><span style="color: #00A000">-- Part of the "Uniform resource identifier parsing" module.
+</span>
+<span style="color: #000080; font-weight: bold">function</span> <a href="http://peterodding.com/code/lua/apr/docs/#apr.uri_decode" style="color: #900090; text-decoration: none">apr.uri_decode</a>(s)
+  <span style="color: #000080; font-weight: bold">local</span> char = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-string.char" style="color: #900090; text-decoration: none">string.char</a>
+  <span style="color: #000080; font-weight: bold">local</span> <a href="http://www.lua.org/manual/5.1/manual.html#pdf-tonumber" style="color: #900090; text-decoration: none">tonumber</a> = <a href="http://www.lua.org/manual/5.1/manual.html#pdf-tonumber" style="color: #900090; text-decoration: none">tonumber</a>
+  s = s:gsub(<span style="color: #009090">'+'</span>, <span style="color: #009090">' '</span>)
+  <span style="color: #000080; font-weight: bold">return</span> (s:gsub(<span style="color: #009090">'%%(%x%x?)'</span>, <span style="color: #000080; font-weight: bold">function</span>(code)
+    <span style="color: #000080; font-weight: bold">return</span> char(<a href="http://www.lua.org/manual/5.1/manual.html#pdf-tonumber" style="color: #900090; text-decoration: none">tonumber</a>(code, 16))
+  <span style="color: #000080; font-weight: bold">end</span>))
+<span style="color: #000080; font-weight: bold">end</span>
+
+<span style="color: #00A000">-- }}}1
+</span>
+<span style="color: #000080; font-weight: bold">return</span> apr
+
+<span style="color: #00A000">-- vim: ts=2 sw=2 et tw=79 fen fdm=marker
+</span></pre></body></html>
