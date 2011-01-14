@@ -8,7 +8,7 @@ demo: $(STYLESHEETS)
 examples/%.css: src/colors/%.lua src/init.lua
 	lua -e "print(require 'lxsh'.stylesheet'$(notdir $(basename $@))')" > $@
 
-ZIPNAME = lxsh-0.5-1
+ZIPNAME = lxsh-0.6.1-1
 
 package: demo
 	@rm -f $(ZIPNAME).zip
