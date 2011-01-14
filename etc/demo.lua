@@ -17,11 +17,10 @@ html, body { margin: 0; padding: 0; }
 pre { margin: 0; padding: 1em; }
 </style>
 ]],
-lxsh.includestyles(colors),
-[[</head>
-<body>]]))
+lxsh.includestyles(colors, true),
+'\n</head>\n<body>\n'))
   assert(handle:write(data))
-  assert(handle:write '</body></html>')
+  assert(handle:write '\n</body>\n</html>\n')
   local nbytes = handle:seek()
   assert(handle:close())
   return nbytes

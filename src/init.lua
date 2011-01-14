@@ -9,7 +9,7 @@
 
 ]]
 
-local lxsh = { _VERSION = '0.6' }
+local lxsh = { _VERSION = '0.6.1' }
 local lpeg = require 'lpeg'
 
 -- Lexing. {{{1
@@ -193,12 +193,15 @@ end
 
 -- Style sheet generator. {{{2
 
-function lxsh.includestyles(default)
+function lxsh.includestyles(default, includeswitcher)
   local template = '<link rel="%s" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/%s.css" title="%s">'
   local output = {}
   for _, style in ipairs { 'earendel', 'slate', 'wiki' } do
     local rel = style == default and 'stylesheet' or 'alternate stylesheet'
     output[#output + 1] = template:format(rel, style, style:gsub('^%w', string.upper))
+  end
+  if includeswitcher then
+    output[#output + 1] = '<script type="text/javascript" src="http://peterodding.com/code/lua/lxsh/styleswitcher.js"></script>'
   end
   return table.concat(output, '\n')
 end
