@@ -3,7 +3,7 @@
  Lexer for C source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 13, 2011
+ Last Change: January 14, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -17,7 +17,7 @@ local R = lpeg.R
 local S = lpeg.S
 
 -- Create a lexer definition context.
-local define, compile = lxsh.lexer()
+local define, compile = lxsh.lexer 'c'
 
 -- The following LPeg patterns are used as building blocks.
 local upp, low = R'AZ', R'az'

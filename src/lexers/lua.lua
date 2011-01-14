@@ -3,7 +3,7 @@
  Lexer for Lua 5.1 source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 13, 2011
+ Last Change: January 14, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -19,7 +19,7 @@ local D = R'09'
 local I = R('AZ', 'az', '\127\255') + P'_'
 
 -- Create a lexer definition context.
-local define, compile = lxsh.lexer()
+local define, compile = lxsh.lexer 'lua'
 
 -- Pattern definitions start here.
 define('whitespace', S'\r\n\f\t '^1)

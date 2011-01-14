@@ -1,5 +1,12 @@
-demo:
+STYLESHEETS = examples/earendel.css \
+              examples/slate.css \
+              examples/wiki.css
+
+demo: $(STYLESHEETS)
 	lua etc/demo.lua
+
+examples/%.css: src/colors/%.lua src/init.lua
+	lua -e "print(require 'lxsh'.stylesheet'$(notdir $(basename $@))')" > $@
 
 ZIPNAME = lxsh-0.5-1
 

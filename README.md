@@ -5,7 +5,7 @@ LXSH is a collection of [lexers][lexing] and [highlighters][highlighting] writte
  * **Lua:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/apr.lua.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/apr.lua.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/apr.lua.html)
  * **C:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/lua_apr.c.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/lua_apr.c.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/lua_apr.c.html)
 
-As you can see in the above examples the highlighters replace standard library identifiers (and then some) with hyperlinks to the relevant documentation.
+As you can see in the above examples the highlighters replace standard library identifiers (and then some) with hyperlinks to the relevant documentation. You can also try switching between style sheets while staying on the same page by using your web browsers *View → Page styles* menu (this works using so-called "alternate style sheets").
 
 ## Installation
 
@@ -60,10 +60,37 @@ The syntax highlighters can be used as follows:
 You can customize the output of the highlighters by passing a table with one or more of the following options:
 
  * `encodews`: Replace newlines with `<br>` elements and ordinary spaces with non-breaking spaces so that whitespace is preserved when the highlighted code isn't embedded in a `<pre>` block
+ * `external`: By default the highlighters generate inline CSS styles which makes it easier to use the output directly but also bloats the size significantly. If you want to reduce the size and don't mind including an external style sheet use this option. You'll need to make sure the required styles are loaded, e.g. by embedded the output of `lxsh.includestyles()` in the `<head>` of your HTML document (this has the added benefit of enabling users to pick their own preferred color scheme)
  * `colors`: The color scheme to use, one of the following:
    * `require 'lxsh.colors.earendel'` based on the [Vim color scheme Earendel][earendel] by Georg Dahn (this is the default)
    * `require 'lxsh.colors.slate'` based on the [Vim color scheme Slate][slate] by Ralph Amissah
    * `require 'lxsh.colors.wiki'` based on the style of the [lua-users wiki][lua_wiki]
+
+## Tokens produced by the lexers
+
+The Lua lexer produces the following tokens:
+
+ * comment
+ * constant (`true`, `false` and `nil`)
+ * error (invalid input)
+ * identifier
+ * keyword
+ * number
+ * operator
+ * string
+ * whitespace
+
+The C lexer produces the following tokens:
+
+ * comment
+ * constant (character and string literals like `'C'` and `"Lua"`)
+ * error (invalid input)
+ * identifier
+ * keyword 
+ * number
+ * operator
+ * preprocessor
+ * whitespace
 
 ## Contact
 
