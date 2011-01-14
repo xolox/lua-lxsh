@@ -20,8 +20,11 @@ function LXSH_GetActiveStyle() {
 function LXSH_ChangeStyle(newstyle) {
   var head = document.getElementsByTagName('head')[0];
   var elements = LXSH_GetAllStyles();
-  for (var i = elements.length - 1; i >= 0; i--)
-    elements[i].disabled = (elements[i].getAttribute('title') != newstyle);
+  for (var i = elements.length - 1; i >= 0; i--) {
+    var title = elements[i].getAttribute('title');
+    elements[i].rel = 'stylesheet';
+    elements[i].disabled = (title != newstyle);
+  }
 }
 
 function createCookie(name, value, days) {
@@ -47,7 +50,19 @@ function readCookie(name) {
   return null;
 }
 
-window.onload = function() {
+window.onDomReady = DomReady;
+function DomReady(fn) {
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", fn, false);
+  else
+    document.onreadystatechange = function(){readyState(fn)}
+}
+
+function readyState(fn) {
+  if (document.readyState == "interactive") fn();
+}
+
+function LXSH_Init() {
   var styles = LXSH_GetAllStyles();
   var active = readCookie('lxsh_colors');
   if (active != null)
@@ -60,15 +75,9 @@ window.onload = function() {
       var select = document.createElement('select');
       select.style.cssFloat = 'right';
       select.style.padding = '5px';
-      select.onclick = function() {
-        var elements = select.getElementsByTagName('option');
-        for (var j = 0; j < elements.length; j++)
-          if (elements[j].selected) {
-            var name = elements[j].innerHTML;
-            LXSH_ChangeStyle(name);
-            createCookie('lxsh_colors', name, 365);
-            break;
-          }
+      select.onchange = function() {
+        LXSH_ChangeStyle(select.value);
+        createCookie('lxsh_colors', select.value, 365);
       }
       var group = document.createElement('optgroup');
       group.label = 'Colors:';
@@ -85,3 +94,5 @@ window.onload = function() {
       elements[i].insertBefore(select, elements[i].firstChild);
     }
 }
+
+window.onDomReady(LXSH_Init);
