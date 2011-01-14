@@ -52,15 +52,17 @@ The syntax highlighters can be used as follows:
     > -- Load the highlighter.
     > highlighter = require 'lxsh.highlighters.lua'
 
-    > -- Use it to highlight some code.
-    > print(highlighter "require 'lpeg'")
-    <a href="http://www.lua.org/manual/5.1/manual.html#pdf-require" style="color: #0e7c6b; text-decoration: none">require</a>
-    <span style="color: #a8660d">'lpeg'</span><span style="color: #2239a8; font-weight: bold">;</span>
+    > -- Use it to highlight some code (line breaks added for clarity).
+    > print(highlighter("require 'lpeg'", { external = true }))
+    <pre class="sourcecode lua">
+    <a href="http://www.lua.org/manual/5.1/manual.html#pdf-require" class="library">require</a>
+    <span class="constant">'lpeg'</span>
+    </pre>
 
 You can customize the output of the highlighters by passing a table with one or more of the following options:
 
  * `encodews`: Replace newlines with `<br>` elements and ordinary spaces with non-breaking spaces so that whitespace is preserved when the highlighted code isn't embedded in a `<pre>` block
- * `external`: By default the highlighters generate inline CSS styles which makes it easier to use the output directly but also bloats the size significantly. If you want to reduce the size and don't mind including an external style sheet use this option. You'll need to make sure the required styles are loaded, e.g. by embedded the output of `lxsh.includestyles()` in the `<head>` of your HTML document (this has the added benefit of enabling users to pick their own preferred color scheme)
+ * `external`: By default the highlighters generate inline CSS which makes it easier to use the output directly but it also bloats the size significantly. If you want to reduce the size and don't mind including an external style sheet you can set this option to `true`. You'll need to make sure the required styles are loaded, e.g. by embedding the output of `lxsh.includestyles(preferred, includeswitcher)` in the `<head>` of your HTML document (the `preferred` argument indicates the default style sheet and if you pass `includeswitcher` as `true` then an interactive style sheet switcher using JavaScript is included)
  * `colors`: The color scheme to use, one of the following:
    * `require 'lxsh.colors.earendel'` based on the [Vim color scheme Earendel][earendel] by Georg Dahn (this is the default)
    * `require 'lxsh.colors.slate'` based on the [Vim color scheme Slate][slate] by Ralph Amissah
