@@ -3,6 +3,7 @@
 LXSH is a collection of [lexers][lexing] and [highlighters][highlighting] written in [Lua][lua] using the excellent pattern-matching library [LPeg][lpeg]. The highlighters generate [HTML][html] designed to be easily embedded in web pages. Two programming languages are currently supported, these are Lua and C. The highlighters support three color schemes, here are some examples of both languages in every color scheme:
 
  * **Lua:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/apr.lua.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/apr.lua.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/apr.lua.html)
+ * **Lua's interactive prompt:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/prompt.lua.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/prompt.lua.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/prompt.lua.html)
  * **C:** [Earendel](http://peterodding.com/code/lua/lxsh/examples/earendel/lua_apr.c.html), [Slate](http://peterodding.com/code/lua/lxsh/examples/slate/lua_apr.c.html), [Wiki](http://peterodding.com/code/lua/lxsh/examples/wiki/lua_apr.c.html)
 
 As you can see in the above examples the highlighters replace standard library identifiers (and then some) with hyperlinks to the relevant documentation. You can also try switching between style sheets while staying on the same page by using your web browsers *View → Page styles* menu (this works using so-called "alternate style sheets").

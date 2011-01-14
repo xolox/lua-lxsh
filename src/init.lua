@@ -9,7 +9,7 @@
 
 ]]
 
-local lxsh = { _VERSION = '0.6.1' }
+local lxsh = { _VERSION = '0.6.2' }
 local lpeg = require 'lpeg'
 
 -- Lexing. {{{1

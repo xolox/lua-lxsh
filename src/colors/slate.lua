@@ -11,6 +11,7 @@
 
 return {
   comment      = 'color: #666',
+  constant     = 'color: #87CEEB',
   default      = 'color: white; background-color: #262626',
   escape       = 'color: #BDB76B',
   keyword      = 'color: #FFFF60; font-weight: bold',
@@ -19,6 +20,6 @@ return {
   number       = 'color: #FFA0A0',
   operator     = 'color: red',
   preprocessor = 'color: #F00; background-color: white',
-  constant     = 'color: #87CEEB',
+  prompt       = 'color: #666',
   url          = 'color: #80A0FF',
 }

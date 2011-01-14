@@ -1,0 +1,43 @@
+<html>
+<head>
+<style type="text/css">
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+pre {
+  margin: 0;
+  padding: 1em;
+  height: auto !important; /* real browsers */
+  height: 100%; /* IE6: treaded as min-height*/
+  min-height: 100%; /* real browsers */
+}
+</style>
+<link rel="stylesheet" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/earendel.css" title="Earendel">
+<link rel="alternate stylesheet" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/slate.css" title="Slate">
+<link rel="alternate stylesheet" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/wiki.css" title="Wiki">
+<script type="text/javascript" src="http://peterodding.com/code/lua/lxsh/styleswitcher.js"></script>
+</head>
+<body>
+<pre class="sourcecode lua"><span class="prompt">Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio</span>
+<span class="prompt">&gt;</span> <span class="comment">-- Load the lexer.
+</span><span class="prompt">&gt;</span> <span class="identifier">lexer</span> <span class="operator">=</span> <a href="http://www.lua.org/manual/5.1/manual.html#pdf-require" class="library">require</a> <span class="constant">'lxsh.lexers.lua'</span>
+<span class="prompt">&gt;</span> <span class="comment">-- Run the lexer on a string of source code.
+</span><span class="prompt">&gt;</span> <span class="keyword">for</span> <span class="identifier">kind</span><span class="operator">,</span> <span class="identifier">text</span> <span class="keyword">in</span> <span class="identifier">lexer.gmatch</span> <span class="constant">'i = i + 1 -- example'</span> <span class="keyword">do</span>
+<span class="prompt">&gt;&gt;</span>  <a href="http://www.lua.org/manual/5.1/manual.html#pdf-print" class="library">print</a><span class="operator">(</span><span class="identifier">kind</span><span class="operator">,</span> <span class="identifier">text</span><span class="operator">)</span>
+<span class="prompt">&gt;&gt;</span> <span class="keyword">end</span>
+<span class="identifier">identifier</span>  <span class="identifier">i</span>
+<span class="identifier">whitespace</span>   
+<span class="identifier">operator</span>    <span class="operator">=</span>
+<span class="identifier">whitespace</span>   
+<span class="identifier">identifier</span>  <span class="identifier">i</span>
+<span class="identifier">whitespace</span>   
+<span class="identifier">operator</span>    <span class="operator">+</span>
+<span class="identifier">whitespace</span>   
+<span class="identifier">number</span>      <span class="number">1</span>
+<span class="identifier">whitespace</span>   
+<span class="identifier">comment</span>     <span class="comment">-- example
+</span></pre>
+</body>
+</html>

@@ -1,8 +1,18 @@
 <html>
 <head>
 <style type="text/css">
-html, body { margin: 0; padding: 0; }
-pre { margin: 0; padding: 1em; }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+pre {
+  margin: 0;
+  padding: 1em;
+  height: auto !important; /* real browsers */
+  height: 100%; /* IE6: treaded as min-height*/
+  min-height: 100%; /* real browsers */
+}
 </style>
 <link rel="stylesheet" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/earendel.css" title="Earendel">
 <link rel="alternate stylesheet" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/slate.css" title="Slate">

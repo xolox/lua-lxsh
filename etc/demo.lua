@@ -13,8 +13,18 @@ function writefile(path, colors, data)
 <html>
 <head>
 <style type="text/css">
-html, body { margin: 0; padding: 0; }
-pre { margin: 0; padding: 1em; }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+pre {
+  margin: 0;
+  padding: 1em;
+  height: auto !important; /* real browsers */
+  height: 100%; /* IE6: treaded as min-height*/
+  min-height: 100%; /* real browsers */
+}
 </style>
 ]],
 lxsh.includestyles(colors, true),
@@ -36,7 +46,14 @@ for _, colors in ipairs { 'earendel', 'slate', 'wiki' } do
   local outfile = 'examples/' .. colors .. '/apr.lua.html'
   local nbytes = writefile(outfile, colors, highlighter(input, options))
   print(('Wrote %iK to %s'):format(nbytes/1024, outfile))
-  
+
+  -- Highlight example Lua source code copied from the interactive prompt.
+  local highlighter = require 'lxsh.highlighters.lua'
+  local input = readfile 'examples/prompt.lua'
+  local outfile = 'examples/' .. colors .. '/prompt.lua.html'
+  local nbytes = writefile(outfile, colors, highlighter(input, options))
+  print(('Wrote %iK to %s'):format(nbytes/1024, outfile))
+
   -- Highlight example C source code (also from my Lua/APR binding).
   local highlighter = require 'lxsh.highlighters.c'
   local input = readfile 'examples/lua_apr.c'

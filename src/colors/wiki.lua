@@ -11,9 +11,10 @@
 
 return {
   comment      = 'color: #00A000',
+  constant     = 'color: #009090',
   default      = 'color: black; background: white',
   keyword      = 'color: #000080; font-weight: bold',
   library      = 'color: #900090; text-decoration: none',
   marker       = 'background: #ffff00',
-  constant     = 'color: #009090',
+  prompt       = 'color: #00A000',
 }

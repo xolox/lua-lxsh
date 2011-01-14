@@ -22,5 +22,6 @@ return {
   number       = 'color: #a8660d',
   operator     = 'color: #2239a8; font-weight: bold',
   preprocessor = 'color: #a33243',
+  prompt       = 'color: #558817',
   url          = 'color: #272fc2',
 }

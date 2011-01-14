@@ -24,6 +24,23 @@ local define, compile = lxsh.lexer 'lua'
 -- Pattern definitions start here.
 define('whitespace', S'\r\n\f\t '^1)
 define('constant', P'true' + P'false' + P'nil')
+
+-- Interactive prompt.
+define('prompt', function(input, index)
+  if index == 1 then
+    local copyright = '^Lua%s+%S+%s+Copyright[^\r\n]+'
+    local first, last = input:find(copyright, index)
+    if last then
+      return last + 1
+    end
+  else
+    local first, last = input:find('^[\r\n]>>?', index-1)
+    if last then
+      return last + 1
+    end
+  end
+end)
+
 define('identifier', I * (I + D + '.')^0)
 
 -- Numbers.
