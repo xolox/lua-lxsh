@@ -9,7 +9,7 @@
 
 ]]
 
-local lxsh = { _VERSION = '0.6.3' }
+local lxsh = { _VERSION = '0.6.4' }
 local lpeg = require 'lpeg'
 
 -- Lexing. {{{1
@@ -230,3 +230,5 @@ function lxsh.stylesheet(name)
 end
 
 return lxsh
+
+-- vim: ts=2 sw=2 et

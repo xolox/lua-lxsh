@@ -3,7 +3,7 @@
  Syntax highlighter for Lua 5.1 source code.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 13, 2011
+ Last Change: July 9, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -18,7 +18,7 @@ local escseq = lpeg.P'%' * ('%' + lpeg.R('AZ', 'az', '09'))
              + lpeg.P'\\' * ((#lpeg.R'09' * lpeg.R'09'^-3) + 1)
 
 return lxsh.highlighter(lexer, docs, escseq, function(kind, text)
-  if kind == 'string' and text:find '^[\'"]' then
-    return 'constant'
-  end
+  return kind == 'string' and 'constant' or kind
 end)
+
+-- vim: ts=2 sw=2 et

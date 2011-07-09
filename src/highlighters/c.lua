@@ -3,7 +3,7 @@
  Syntax highlighter for C source code.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 13, 2011
+ Last Change: July 9, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -20,3 +20,5 @@ local escseq = lpeg.P'%' * lpeg.R('AZ', 'az', '09')
 return lxsh.highlighter(lexer, docs, escseq, function(kind, text)
   return kind == 'constant' and kind
 end)
+
+-- vim: ts=2 sw=2 et

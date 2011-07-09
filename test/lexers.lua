@@ -1,4 +1,15 @@
-local verbose = true
+--[[
+
+ Unit tests for the lexers of the LXSH module.
+
+ Author: Peter Odding <peter@peterodding.com>
+ Last Change: July 9, 2011
+ URL: http://peterodding.com/code/lua/lxsh/
+
+]]
+
+-- Enable this to debug test failures.
+local verbose = false
 
 local escape_sequences = {
   ['\0'] = '\\0',
@@ -102,10 +113,10 @@ long string]]
 check_tokens(lua_lexer.gmatch [==[
 #!shebang line
 -- single line comment
---[[
+--[=[
 long
 comment
-]]
+]=]
 --[[
 nested
 --[=[long]=]
@@ -114,7 +125,7 @@ comment
 ]==], {
   { 'comment', '#!shebang line\n' },
   { 'comment', '-- single line comment\n' },
-  { 'comment', '--[[\nlong\ncomment\n]]' },
+  { 'comment', '--[=[\nlong\ncomment\n]=]' },
   { 'whitespace', '\n' },
   { 'comment', '--[[\nnested\n--[=[long]=]\ncomment\n]]' },
   { 'whitespace', '\n' },
@@ -511,3 +522,5 @@ while
   { 'keyword', 'volatile' }, { 'whitespace', '\n' },
   { 'keyword', 'while' }, { 'whitespace', '\n' },
 })
+
+-- vim: ts=2 sw=2 et
