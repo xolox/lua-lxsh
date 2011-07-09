@@ -14,7 +14,7 @@ test:
 	@lua test/highlighters.lua
 
 examples/%.css: src/colors/%.lua src/init.lua
-	@lua -e "print(require 'lxsh'.stylesheet'$(notdir $(basename $@))')" > $@
+	@lua -e "print(require 'lxsh'.highlighters.stylesheet'$(notdir $(basename $@))')" > $@
 
 package: demo
 	@rm -f $(PACKAGE).zip

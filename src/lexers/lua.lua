@@ -8,7 +8,7 @@
 
 ]]
 
-local lxsh = require 'lxsh.init'
+local lxsh = require 'lxsh'
 local lpeg = require 'lpeg'
 local C = lpeg.C
 local Cc = lpeg.Cc
@@ -19,7 +19,7 @@ local D = R'09'
 local I = R('AZ', 'az', '\127\255') + P'_'
 
 -- Create a lexer definition context.
-local define, compile = lxsh.lexer 'lua'
+local define, compile = lxsh.lexers.new 'lua'
 
 -- Pattern definitions start here.
 define('whitespace', S'\r\n\f\t\v '^1)

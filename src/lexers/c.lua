@@ -8,7 +8,7 @@
 
 ]]
 
-local lxsh = require 'lxsh.init'
+local lxsh = require 'lxsh'
 local lpeg = require 'lpeg'
 local C = lpeg.C
 local Cc = lpeg.Cc
@@ -17,7 +17,7 @@ local R = lpeg.R
 local S = lpeg.S
 
 -- Create a lexer definition context.
-local define, compile = lxsh.lexer 'c'
+local define, compile = lxsh.lexers.new 'c'
 
 -- The following LPeg patterns are used as building blocks.
 local upp, low = R'AZ', R'az'

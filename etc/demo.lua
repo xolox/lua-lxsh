@@ -27,7 +27,7 @@ pre {
 }
 </style>
 ]],
-lxsh.includestyles(colors, true),
+lxsh.highlighters.includestyles(colors, true),
 '\n</head>\n<body>\n'))
   assert(handle:write(data))
   assert(handle:write '\n</body>\n</html>\n')
