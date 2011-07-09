@@ -4,12 +4,12 @@
  and perform syntax highlighting based on the defined lexers.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 14, 2011
+ Last Change: July 9, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
 
-local lxsh = { _VERSION = '0.6.2' }
+local lxsh = { _VERSION = '0.6.3' }
 local lpeg = require 'lpeg'
 
 -- Lexing. {{{1

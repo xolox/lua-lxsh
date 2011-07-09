@@ -3,7 +3,7 @@
  Lexer for Lua 5.1 source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 14, 2011
+ Last Change: July 9, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -22,7 +22,7 @@ local I = R('AZ', 'az', '\127\255') + P'_'
 local define, compile = lxsh.lexer 'lua'
 
 -- Pattern definitions start here.
-define('whitespace', S'\r\n\f\t '^1)
+define('whitespace', S'\r\n\f\t\v '^1)
 define('constant', P'true' + P'false' + P'nil')
 
 -- Interactive prompt.
@@ -47,8 +47,9 @@ define('identifier', I * (I + D + '.')^0)
 local sign = S'+-'^-1
 local decimal = D^1
 local hexadecimal = P'0' * S'xX' * R('09', 'AF', 'af') ^ 1
-local float = (D^1 * P'.' * D^0 + P'.' * D^1) * (S'eE' * sign * D^1)^-1
-define('number', hexadecimal + float + decimal)
+local float = D^1 * P'.' * D^0 + P'.' * D^1
+local maybeexp = (float + decimal) * (S'eE' * sign * D^1)^-1
+define('number', hexadecimal + maybeexp)
 
 -- Pattern for long strings and long comments.
 local longstring = #(P'[[' + (P'[' * P'=' ^ 0 * P'[')) * P(function(input, index)
