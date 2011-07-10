@@ -26,11 +26,11 @@ If you don't have LuaRocks installed you can [download the latest release][zipba
 
 If you want to call a lexer or access an LPeg pattern defined by the lexer you can do so as follows (this example demonstrates the Lua lexer but the C lexer works the same):
 
-    > -- Load the lexer.
-    > lexer = require 'lxsh.lexers.lua'
+    > -- Load the LXSH module.
+    > require 'lxsh'
 
     > -- Run the lexer on a string of source code.
-    > for kind, text in lexer.gmatch 'i = i + 1 -- example' do
+    > for kind, text in lxsh.lexers.lua.gmatch 'i = i + 1 -- example' do
     >>  print(kind, text)
     >> end
     identifier  i
@@ -46,15 +46,17 @@ If you want to call a lexer or access an LPeg pattern defined by the lexer you c
     comment     -- example
 
     > -- Use one of the patterns defined by the lexer.
-    > lexer.patterns.comment:match '--[=[ this is a long comment ]=]'
+    > lxsh.lexers.lua.patterns.comment:match '--[=[ this is a long comment ]=]'
+
+Lexers define the following functions:
+
+ * `lexer.find(subject, init)` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the last matched character
+ * `lexer.match(subject, init)` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the matched text
+ * `lexer.gmatch(subject)` returns an iterator that produces two values on each iteration: the token kind and the matched text
 
 The syntax highlighters can be used as follows:
 
-    > -- Load the highlighter.
-    > highlighter = require 'lxsh.highlighters.lua'
-
-    > -- Use it to highlight some code (line breaks added for clarity).
-    > print(highlighter("require 'lpeg'", { external = true }))
+    > print(lxsh.highlighters.lua("require 'lpeg'", { external = true }))
     <pre class="sourcecode lua">
     <a href="http://www.lua.org/manual/5.1/manual.html#pdf-require" class="library">require</a>
     <span class="constant">'lpeg'</span>
@@ -65,9 +67,9 @@ You can customize the output of the highlighters by passing a table with one or 
  * `encodews`: Replace newlines with `<br>` elements and ordinary spaces with non-breaking spaces so that whitespace is preserved when the highlighted code isn't embedded in a `<pre>` block
  * `external`: By default the highlighters generate inline CSS which makes it easier to use the output directly but it also bloats the size significantly. If you want to reduce the size and don't mind including an external style sheet you can set this option to `true`. You'll need to make sure the required styles are loaded, e.g. by embedding the output of `lxsh.highlighters.includestyles(preferred, includeswitcher)` in the `<head>` of your HTML document (the `preferred` argument indicates the default style sheet and if you pass `includeswitcher` as `true` then an interactive style sheet switcher using JavaScript is included)
  * `colors`: The color scheme to use, one of the following:
-   * `require 'lxsh.colors.earendel'` based on the [Vim color scheme Earendel][earendel] by Georg Dahn (this is the default)
-   * `require 'lxsh.colors.slate'` based on the [Vim color scheme Slate][slate] by Ralph Amissah
-   * `require 'lxsh.colors.wiki'` based on the style of the [lua-users wiki][lua_wiki]
+   * `lxsh.colors.earendel` based on the [Vim color scheme Earendel][earendel] by Georg Dahn (this is the default)
+   * `lxsh.colors.slate` based on the [Vim color scheme Slate][slate] by Ralph Amissah
+   * `lxsh.colors.wiki` based on the style of the [lua-users wiki][lua_wiki]
 
 ## Tokens produced by the lexers
 
