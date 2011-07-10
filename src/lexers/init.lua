@@ -65,7 +65,7 @@ function lxsh.lexers.new(language)
     end
   end
 
-  -- Return the two functions.
+  -- Return the two closures used to construct the lexer.
   return define, compile
 
 end

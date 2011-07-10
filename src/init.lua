@@ -27,7 +27,7 @@ local function autoload(path, constructor)
 end
 
 local lxsh = {
-  _VERSION = '0.6.6',
+  _VERSION = '0.6.7',
   lexers = autoload('lxsh.lexers', true),
   highlighters = autoload('lxsh.highlighters', true),
   colors = autoload 'lxsh.colors',

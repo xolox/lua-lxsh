@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define syntax highlighters.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 9, 2011
+ Last Change: July 10, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -54,14 +54,35 @@ end
 
 -- linkify() - Replace URLs in comments/strings with hyperlinks. {{{2
 local linkify; do
+  -- LPeg pattern to match e-mail addresses.
+  local alnum = lpeg.R('AZ', 'az', '09')
+  local domainpart = alnum^1 * (lpeg.S'_-' * alnum^1)^0
+  local domain = domainpart * ('.' * domainpart)^1
+  local email = alnum^1 * (lpeg.S'_-.+' * alnum^1)^0 * '@' * domain
+  -- LPeg pattern to match URLs.
   local protocol = ((lpeg.P'https' + 'http' + 'ftp' + 'irc') * '://') + 'mailto:'
   local remainder = ((1-lpeg.S'\r\n\f\t ,.') + (lpeg.S',.' * (1-lpeg.S'\r\n\f\t ')))^0
-  local pattern = lpeg.Cs((lpeg.C(protocol * remainder) * lpeg.Carg(1) / function(url, options)
+  local url = protocol * remainder
+  -- Function to obfuscate e-mail addresses.
+  local function obfuscate(email)
+    return email:gsub('.', function(c)
+      return ('&#%d;'):format(c:byte())
+    end)
+  end
+  local pattern = lpeg.Cs((lpeg.Cs(email + url) * lpeg.Carg(1) / function(url, options)
+    local text = url
+    if url:find '@' and not url:find '://' then
+      if not url:find '^mailto:' then
+        url = 'mailto:' .. url
+      end
+      url = obfuscate(url)
+      text = obfuscate(text)
+    end
     local html = '<a href="' .. url .. '"'
     if options.colors.url and not options.external then
       html = html .. ' style="' .. options.colors.url .. '"'
     end
-    return html .. '>' .. url .. '</a>'
+    return html .. '>' .. text .. '</a>'
   end + 1)^0)
   function linkify(text, options)
     return lpeg.match(pattern, text, 1, options)
