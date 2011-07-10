@@ -6,6 +6,31 @@
  Last Change: July 10, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
+ The syntax highlighters in the LXSH module decorate the token streams produced
+ by the lexers with the following additional tokens:
+
+  - TODO, FIXME and XXX markers in comments
+  - e-mail addresses and hyper links in strings and comments
+  - escape sequences in character and string literals
+
+ Coroutines are used to simplify the implementation of the decorated token
+ stream and while it works I'm not happy with the code. Note also that the
+ token stream is flat which means the following Lua source code:
+
+   -- TODO Nested tokens?
+
+ Produces the following HTML source code (reformatted for readability):
+
+   <span class="comment">--</span>
+   <span class="marker">TODO</span>
+   <span class="comment">Nested tokens?</span>
+
+ Instead of what you may have expected:
+
+   <span class="comment">--
+   <span class="marker">TODO</span>
+   Nested tokens?</span>
+
 ]]
 
 local lxsh = require 'lxsh'
@@ -13,22 +38,23 @@ local lpeg = require 'lpeg'
 
 -- Internal functions. {{{1
 
--- htmlencode() - Encode text as HTML. {{{2
-local htmlencode; do
-  local entities = { ['<'] = '&lt;', ['>'] = '&gt;', ['&'] = '&amp;' }
-  function htmlencode(text)
-    return (text:gsub('[<>&]', entities))
-  end
+local function obfuscate(email)
+  return (email:gsub('.', function(c)
+    return ('&#%d;'):format(c:byte())
+  end))
 end
 
--- fixspaces() - Convert multiple spaces into non-breaking spaces. {{{2
+local entities = { ['<'] = '&lt;', ['>'] = '&gt;', ['&'] = '&amp;' }
+local function htmlencode(text)
+  return (text:gsub('[<>&]', entities))
+end
+
 local function fixspaces(text)
-  return text:gsub(' +', function(space)
+  return (text:gsub(' +', function(space)
     return string.rep('&nbsp;', #space)
-  end)
+  end))
 end
 
--- wrap() - Wrap text in a <span> element with the given CSS styles. {{{2
 local function wrap(token, text, options)
   if token then
     local attr = options.external and 'class' or 'style'
@@ -41,104 +67,119 @@ local function wrap(token, text, options)
   return text
 end
 
--- hlmarkers() - Highlight TODO, FIXME and XXX markers in comments. {{{2
-local hlmarkers; do
-  local marker = lpeg.P'TODO' + 'FIXME' + 'XXX'
-  local pattern = lpeg.Cs((lpeg.C(marker) * lpeg.Carg(1) / function(text, options)
-    return wrap('marker', text, options)
-  end + 1)^0)
-  function hlmarkers(text, options)
-    return lpeg.match(pattern, text, 1, options)
-  end
-end
+-- LPeg patterns to decorate the token stream (richer highlighting). {{{1
 
--- linkify() - Replace URLs in comments/strings with hyperlinks. {{{2
-local linkify; do
-  -- LPeg pattern to match e-mail addresses.
-  local alnum = lpeg.R('AZ', 'az', '09')
-  local domainpart = alnum^1 * (lpeg.S'_-' * alnum^1)^0
-  local domain = domainpart * ('.' * domainpart)^1
-  local email = alnum^1 * (lpeg.S'_-.+' * alnum^1)^0 * '@' * domain
-  -- LPeg pattern to match URLs.
-  local protocol = ((lpeg.P'https' + 'http' + 'ftp' + 'irc') * '://') + 'mailto:'
-  local remainder = ((1-lpeg.S'\r\n\f\t ,.') + (lpeg.S',.' * (1-lpeg.S'\r\n\f\t ')))^0
-  local url = protocol * remainder
-  -- Function to obfuscate e-mail addresses.
-  local function obfuscate(email)
-    return email:gsub('.', function(c)
-      return ('&#%d;'):format(c:byte())
-    end)
-  end
-  local pattern = lpeg.Cs((lpeg.Cs(email + url) * lpeg.Carg(1) / function(url, options)
-    local text = url
-    if url:find '@' and not url:find '://' then
-      if not url:find '^mailto:' then
-        url = 'mailto:' .. url
-      end
-      url = obfuscate(url)
-      text = obfuscate(text)
-    end
-    local html = '<a href="' .. url .. '"'
-    if options.colors.url and not options.external then
-      html = html .. ' style="' .. options.colors.url .. '"'
-    end
-    return html .. '>' .. text .. '</a>'
-  end + 1)^0)
-  function linkify(text, options)
-    return lpeg.match(pattern, text, 1, options)
-  end
-end
+-- LPeg patterns to scan for comment markers.
+local comment_marker = lpeg.P'TODO' + 'FIXME' + 'XXX'
+local comment_scanner = lpeg.Cc'marker' * lpeg.C(comment_marker)
+                      + lpeg.Carg(1) * lpeg.C((1 - comment_marker)^1)
+
+-- LPeg patterns to match e-mail addresses.
+local alnum = lpeg.R('AZ', 'az', '09')
+local domainpart = alnum^1 * (lpeg.S'_-' * alnum^1)^0
+local domain = domainpart * ('.' * domainpart)^1
+local email = alnum^1 * (lpeg.S'_-.+' * alnum^1)^0 * '@' * domain
+
+-- LPeg patterns to match URLs.
+local protocol = ((lpeg.P'https' + 'http' + 'ftp' + 'irc') * '://') + 'mailto:'
+local remainder = ((1-lpeg.S'\r\n\f\t\v ,."}])') + (lpeg.S',."}])' * (1-lpeg.S'\r\n\f\t\v ')))^0
+local url = protocol * remainder
+
+-- LPeg pattern to scan for e-mail addresses and URLs.
+local other = (1 - (email + url))^1
+local url_scanner = lpeg.Cc'email' * lpeg.C(email)
+                  + lpeg.Cc'url' * lpeg.C(url)
+                  + lpeg.Carg(1) * lpeg.C(other)
 
 -- Constructor for syntax highlighting modes. {{{1
 
 -- Construct a new syntax highlighter from the given parameters.
 function lxsh.highlighters.new(lexer, docs, escseq, isstring)
 
-  -- Create an LPeg pattern to highlight escape sequences in string literals.
-  local hlescapes; do
-    local pattern = lpeg.Cs((lpeg.C(escseq) * lpeg.Carg(1) / function(text, options)
-      return wrap('escape', text, options)
-    end + 1)^0)
-    function hlescapes(text, options)
-      return lpeg.match(pattern, text, 1, options)
+  -- Implementation of decorated token stream (depends on lexer as upvalue). {{{2
+
+  -- LPeg pattern to scan for escape sequences in character and string literals.
+  local escape_scanner = lpeg.Cc'escape' * lpeg.C(escseq)
+                       + lpeg.Carg(1) * lpeg.C((1 - escseq)^1)
+
+  -- Turn an LPeg pattern into an iterator that produces (kind, text) pairs.
+  local function iterator(kind, text, pattern)
+    local index = 1
+    while index <= #text do
+      local subkind, subtext = pattern:match(text, index, kind)
+      if subkind and subtext then
+        coroutine.yield(subkind, subtext)
+        index = index + #subtext
+      end
     end
   end
 
-  -- Return a function that syntax highlights a string of source code.
-  return function(sources, options)
+  -- Decorate the token stream produced by a lexer so that comment markers,
+  -- URLs, e-mail addresses and escape sequences are recognized as well.
+  local function decorator(lexer, subject)
+    for kind, text in lexer.gmatch(subject) do
+      if kind == 'comment' or kind == 'constant' or kind == 'string' then
+        -- Identify e-mail addresses and URLs.
+        for kind, text in coroutine.wrap(function() iterator(kind, text, url_scanner) end) do
+          if kind == 'comment' then
+            -- Identify comment markers.
+            iterator(kind, text, comment_scanner)
+          elseif kind == 'constant' or kind == 'string' then
+            -- Identify escape sequences.
+            iterator(kind, text, escape_scanner)
+          else
+            coroutine.yield(kind, text)
+          end
+        end
+      else
+        coroutine.yield(kind, text)
+      end
+    end
+  end
+
+  -- Highlighter function (depends on lexer and decorator as upvalues). {{{2
+
+  return function(subject, options)
 
     local output = {}
     local options = type(options) == 'table' and options or {}
     if not options.colors then options.colors = lxsh.colors.earendel end
 
-    for kind, text in lexer.gmatch(sources) do
+    for kind, text in coroutine.wrap(function() decorator(lexer, subject) end) do
       local doclink = docs[text]
+      local html
       if doclink then
         local template = '<a href="%s" %s="%s">%s</a>'
         local attr = options.external and 'class' or 'style'
         local value = options.external and 'library' or options.colors.library
-        text = template:format(doclink, attr, value, text)
+        html = template:format(doclink, attr, value, text)
+      elseif kind == 'email' or kind == 'url' then
+        local url = text
+        if url:find '@' and not url:find '://' then
+          if not url:find '^mailto:' then
+            url = 'mailto:' .. url
+          end
+          url = obfuscate(url)
+          text = obfuscate(text)
+        end
+        html = '<a href="' .. url .. '"'
+        if options.colors.url and not options.external then
+          html = html .. ' style="' .. options.colors.url .. '"'
+        end
+        html = html .. '>' .. text .. '</a>'
       else
-        text = htmlencode(text)
+        html = htmlencode(text)
         if options.encodews then
-          text = fixspaces(text)
+          html = fixspaces(html)
         end
-        if kind == 'string' or kind == 'comment' then
-          text = linkify(text, options)
-        end
-        if kind == 'comment' then
-          text = hlmarkers(text, options)
-        end
-        local newkind = isstring(kind, text)
-        if newkind then
-          kind = newkind
-          text = hlescapes(text, options)
+        if kind == 'string' then
+          kind = 'constant'
         end
         if kind ~= 'whitespace' then
-          text = wrap(kind, text, options)
+          html = wrap(kind, html, options)
         end
       end
-      output[#output + 1] = text
+      output[#output + 1] = html
     end
 
     local wrapper = options.wrapper or 'pre'
@@ -159,7 +200,7 @@ function lxsh.highlighters.new(lexer, docs, escseq, isstring)
 
 end
 
--- Style sheet generator. {{{2
+-- Style sheet generator. {{{1
 
 function lxsh.highlighters.includestyles(default, includeswitcher)
   local template = '<link rel="%s" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/%s.css" title="%s">'
@@ -196,5 +237,7 @@ function lxsh.highlighters.stylesheet(name)
   end
   return table.concat(output, '\n')
 end
+
+-- }}}1
 
 return lxsh.highlighters

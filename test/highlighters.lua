@@ -3,10 +3,12 @@
  Unit tests for the HTML syntax highlighters of the LXSH module.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 9, 2011
+ Last Change: July 10, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
+
+-- TODO Test that escape sequences are highlighted in all strings except long strings.
 
 -- Tests for the Lua highlighter. {{{1
 
@@ -84,8 +86,8 @@ assert(lua_highlighter([[
 -- http://peterodding.com/code/lua/lxsh
 os.execute("firefox http://lua.org")
 ]], { external = true }) == [[
-<pre class="sourcecode lua"><span class="comment">-- <a href="http://peterodding.com/code/lua/lxsh">http://peterodding.com/code/lua/lxsh</a>
-</span><a href="http://www.lua.org/manual/5.1/manual.html#pdf-os.execute" class="library">os.execute</a><span class="operator">(</span><span class="constant">"firefox <a href="http://lua.org"">http://lua.org"</a></span><span class="operator">)</span>
+<pre class="sourcecode lua"><span class="comment">-- </span><a href="http://peterodding.com/code/lua/lxsh">http://peterodding.com/code/lua/lxsh</a><span class="comment">
+</span><a href="http://www.lua.org/manual/5.1/manual.html#pdf-os.execute" class="library">os.execute</a><span class="operator">(</span><span class="constant">"firefox </span><a href="http://lua.org">http://lua.org</a><span class="constant">"</span><span class="operator">)</span>
 </pre>]])
 
 -- vim: ts=2 sw=2 et

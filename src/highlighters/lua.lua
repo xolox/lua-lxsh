@@ -6,6 +6,8 @@
  Last Change: July 10, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
+ TODO Distinguish "function" and corresponding "end" keyword from other keywords (I really like this in Vim).
+
 ]]
 
 local lxsh = require 'lxsh'
