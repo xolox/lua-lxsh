@@ -94,15 +94,16 @@ local url_scanner = lpeg.Cc'email' * lpeg.C(email)
 -- Constructor for syntax highlighting modes. {{{1
 
 -- Construct a new syntax highlighter from the given parameters.
-function lxsh.highlighters.new(lexer, docs, escseq, isstring)
+function lxsh.highlighters.new(context)
 
   -- Implementation of decorated token stream (depends on lexer as upvalue). {{{2
 
   -- LPeg pattern to scan for escape sequences in character and string literals.
-  local escape_scanner = lpeg.Cc'escape' * lpeg.C(escseq)
-                       + lpeg.Carg(1) * lpeg.C((1 - escseq)^1)
+  local escape_scanner = lpeg.Cc'escape' * lpeg.C(context.escape_sequence)
+                       + lpeg.Carg(1) * lpeg.C((1 - context.escape_sequence)^1)
 
   -- Turn an LPeg pattern into an iterator that produces (kind, text) pairs.
+  -- TODO Find a better name for this.
   local function iterator(kind, text, pattern)
     local index = 1
     while index <= #text do
@@ -114,17 +115,25 @@ function lxsh.highlighters.new(lexer, docs, escseq, isstring)
     end
   end
 
+  -- Transform a function that produces values using yield() into an iterator.
+  -- TODO Find a better name for this.
+  local function producer(fun, a1, a2, a3)
+    -- Lua refuses to pass ... as an upvalue but we
+    -- only need three arguments so we fake it :-)
+     return coroutine.wrap(function() fun(a1, a2, a3) end)
+  end
+
   -- Decorate the token stream produced by a lexer so that comment markers,
   -- URLs, e-mail addresses and escape sequences are recognized as well.
-  local function decorator(lexer, subject)
-    for kind, text in lexer.gmatch(subject) do
+  local function decorator(context, subject)
+    for kind, text in context.lexer.gmatch(subject) do
       if kind == 'comment' or kind == 'constant' or kind == 'string' then
         -- Identify e-mail addresses and URLs.
-        for kind, text in coroutine.wrap(function() iterator(kind, text, url_scanner) end) do
+        for kind, text in producer(iterator, kind, text, url_scanner) do
           if kind == 'comment' then
             -- Identify comment markers.
             iterator(kind, text, comment_scanner)
-          elseif kind == 'constant' or kind == 'string' then
+          elseif context.has_escapes(kind, text) then
             -- Identify escape sequences.
             iterator(kind, text, escape_scanner)
           else
@@ -145,8 +154,8 @@ function lxsh.highlighters.new(lexer, docs, escseq, isstring)
     local options = type(options) == 'table' and options or {}
     if not options.colors then options.colors = lxsh.colors.earendel end
 
-    for kind, text in coroutine.wrap(function() decorator(lexer, subject) end) do
-      local doclink = docs[text]
+    for kind, text in producer(decorator, context, subject) do
+      local doclink = context.docs[text]
       local html
       if doclink then
         local template = '<a href="%s" %s="%s">%s</a>'
@@ -187,7 +196,7 @@ function lxsh.highlighters.new(lexer, docs, escseq, isstring)
     if not options.external then
       elem = elem .. ' style="' .. options.colors.default .. '"'
     end
-    table.insert(output, 1, elem .. ' class="sourcecode ' .. lexer.language .. '">')
+    table.insert(output, 1, elem .. ' class="sourcecode ' .. context.lexer.language .. '">')
     table.insert(output, '</' .. wrapper .. '>')
     local html = table.concat(output)
 
