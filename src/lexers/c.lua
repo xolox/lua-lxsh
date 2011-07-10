@@ -3,7 +3,7 @@
  Lexer for C source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 9, 2011
+ Last Change: July 10, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -20,21 +20,28 @@ local S = lpeg.S
 local define, compile = lxsh.lexers.new 'c'
 
 -- The following LPeg patterns are used as building blocks.
-local upp, low = R'AZ', R'az'
-local oct, dec = R'07', R'09'
-local hex      = dec + R'AF' + R'af'
-local letter   = upp + low
-local alnum    = letter + dec + '_'
-local endline  = S'\r\n\f'
-local newline  = '\r\n' + endline
-local escape   = '\\' * ( newline
-                        + S'\\"\'?abfnrtv'
-                        + (#oct * oct^-3)
-                        + ('x' * #hex * hex^-2))
+local U, L = R'AZ', R'az' -- uppercase, lowercase
+local O, D = R'07', R'09' -- octal, decimal
+local X = D + R'AF' + R'af' -- hexadecimal
+local W = U + L -- case insensitive letter
+local A = W + D + '_' -- identifier
+local B = -A -- word boundary
+local endline = S'\r\n\f' -- end of line character
+local newline = '\r\n' + endline -- newline sequence
+local escape = '\\' * ( newline -- escape sequence
+                      + S'\\"\'?abfnrtv'
+                      + (#O * O^-3)
+                      + ('x' * #X * X^-2))
+
+define('keyword', (P'auto' + 'break' + 'case' + 'char' + 'const' + 'continue'
+  + 'default' + 'double' + 'do' + 'else' + 'enum' + 'extern' + 'float' + 'for'
+  + 'goto' + 'if' + 'int' + 'long' + 'register' + 'return' + 'short' + 'signed'
+  + 'sizeof' + 'static' + 'struct' + 'switch' + 'typedef' + 'union'
+  + 'unsigned' + 'void' + 'volatile' + 'while') * B)
 
 -- Pattern definitions start here.
 define('whitespace' , S'\r\n\f\t\v '^1)
-define('identifier', (letter + '_') * alnum^0)
+define('identifier', (W + '_') * A^0)
 define('preprocessor', '#' * (1 - S'\r\n\f\\' + '\\' * (newline + 1))^0 * newline^-1)
 
 -- Character and string literals.
@@ -48,11 +55,11 @@ local mlc = '/*' * (1 - P'*/')^0 * '*/'
 define('comment', slc + mlc)
 
 -- Numbers (matched before operators because .1 is a number).
-local int = (('0' * ((S'xX' * hex^1) + oct^1)) + dec^1) * S'lL'^-2
-local flt = ((dec^1 * '.' * dec^0
-            + dec^0 * '.' * dec^1
-            + dec^1 * 'e' * dec^1) * S'fF'^-1)
-            + dec^1 * S'fF'
+local int = (('0' * ((S'xX' * X^1) + O^1)) + D^1) * S'lL'^-2
+local flt = ((D^1 * '.' * D^0
+            + D^0 * '.' * D^1
+            + D^1 * 'e' * D^1) * S'fF'^-1)
+            + D^1 * S'fF'
 define('number', flt + int)
 
 -- Operators (matched after comments because of conflict with slash/division).
@@ -64,39 +71,6 @@ define('operator', P'>>=' + '<<=' + '--' + '>>' + '>=' + '/=' + '==' + '<='
 -- the lexer to resume as a last resort for dealing with unknown input.
 define('error', 1)
 
-return compile {
-   ['auto'    ] = 'keyword',
-   ['break'   ] = 'keyword',
-   ['case'    ] = 'keyword',
-   ['char'    ] = 'keyword',
-   ['const'   ] = 'keyword',
-   ['continue'] = 'keyword',
-   ['default' ] = 'keyword',
-   ['do'      ] = 'keyword',
-   ['double'  ] = 'keyword',
-   ['else'    ] = 'keyword',
-   ['enum'    ] = 'keyword',
-   ['extern'  ] = 'keyword',
-   ['float'   ] = 'keyword',
-   ['for'     ] = 'keyword',
-   ['goto'    ] = 'keyword',
-   ['if'      ] = 'keyword',
-   ['int'     ] = 'keyword',
-   ['long'    ] = 'keyword',
-   ['register'] = 'keyword',
-   ['return'  ] = 'keyword',
-   ['short'   ] = 'keyword',
-   ['signed'  ] = 'keyword',
-   ['sizeof'  ] = 'keyword',
-   ['static'  ] = 'keyword',
-   ['struct'  ] = 'keyword',
-   ['switch'  ] = 'keyword',
-   ['typedef' ] = 'keyword',
-   ['union'   ] = 'keyword',
-   ['unsigned'] = 'keyword',
-   ['void'    ] = 'keyword',
-   ['volatile'] = 'keyword',
-   ['while'   ] = 'keyword',
-}
+return compile()
 
 -- vim: ts=2 sw=2 et

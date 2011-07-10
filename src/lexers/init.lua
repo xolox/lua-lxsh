@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define lexers using LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 9, 2011
+ Last Change: July 10, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -16,39 +16,53 @@ function lxsh.lexers.new(language)
 
   -- Table of LPeg patterns to match all kinds of tokens.
   local patterns = {}
-  local M = { language = language, patterns = patterns }
+  local lexer = { language = language, patterns = patterns }
 
-  -- Define a new token type given its name and LPeg pattern.
+  -- Closure to define token type given name and LPeg pattern.
   local function define(name, patt)
     patt = lpeg.P(patt)
     patterns[name] = patt
     patterns[#patterns + 1] = name
   end
 
-  -- Return an iterator that produces (kind, text) on each iteration.
-  local any, keywords
-  function M.gmatch(sources)
-    local index = 1
-    return function()
-      if not any then any = compile() end
-      local kind, text = any:match(sources, index)
-      if kind and text then
-        index = index + #text
-        if keywords then
-          kind = keywords[text] or kind
-        end
-        return kind, text
-      end
+  -- Closure to compile all patterns into one pattern that captures (kind, text) pair.
+  local function compile()
+    local function id(n)
+      return lpeg.Cc(n) * patterns[n] * lpeg.Cp()
+    end
+    any = id(patterns[1])
+    for i = 2, #patterns do
+      any = any + id(patterns[i])
+    end
+    return lexer
+  end
+
+  -- The basic function for lexical analysis, it takes a subject string and
+  -- optional index and returns a token type and the last index of the match.
+  function lexer.find(subject, init)
+    local kind, after = any:match(subject, init)
+    if kind and after then return kind, after - 1 end
+  end
+
+  -- Convenience function that returns token type and matched text.
+  function lexer.match(subject, init)
+    local kind, after = any:match(subject, init)
+    if kind and after then
+      return kind, subject:sub(init, after - 1)
     end
   end
 
-  -- Compile all patterns into a single pattern that captures a (kind, text) pair.
-  local function compile(_keywords)
-    local function id(n) return lpeg.Cc(n) * lpeg.C(patterns[n]) end
-    any = id(patterns[1])
-    for i = 2, #patterns do any = any + id(patterns[i]) end
-    keywords = _keywords
-    return M
+  -- Return an iterator that produces (kind, text) on each iteration.
+  function lexer.gmatch(subject)
+    local index = 1
+    return function()
+      local kind, after = any:match(subject, index)
+      if kind and after then
+        local text = subject:sub(index, after - 1)
+        index = after
+        return kind, text
+      end
+    end
   end
 
   -- Return the two functions.
