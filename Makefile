@@ -13,6 +13,9 @@ test:
 	@lua test/lexers.lua
 	@lua test/highlighters.lua
 
+links:
+	@lua etc/doclinks.lua
+
 examples/%.css: src/colors/%.lua src/init.lua
 	@lua -e "print(require 'lxsh'.highlighters.stylesheet'$(notdir $(basename $@))')" > $@
 
