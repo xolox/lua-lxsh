@@ -3,15 +3,13 @@
  Lexer for Lua 5.1 source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 10, 2011
+ Last Change: July 15, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
 
 local lxsh = require 'lxsh'
 local lpeg = require 'lpeg'
-local C = lpeg.C
-local Cc = lpeg.Cc
 local P = lpeg.P
 local R = lpeg.R
 local S = lpeg.S
@@ -30,12 +28,12 @@ define('constant', (P'true' + 'false' + 'nil') * B)
 define('prompt', function(input, index)
   if index == 1 then
     local copyright = '^Lua%s+%S+%s+Copyright[^\r\n]+'
-    local first, last = input:find(copyright, index)
+    local _, last = input:find(copyright, index)
     if last then
       return last + 1
     end
   else
-    local first, last = input:find('^[\r\n]>>?', index-1)
+    local _, last = input:find('^[\r\n]>>?', index-1)
     if last then
       return last + 1
     end
@@ -46,8 +44,8 @@ end)
 local longstring = #(P'[[' + (P'[' * P'='^0 * '[')) * P(function(input, index)
   local level = input:match('^%[(=*)%[', index)
   if level then
-    local _, stop = input:find(']' .. level .. ']', index, true)
-    if stop then return stop + 1 end
+    local _, last = input:find(']' .. level .. ']', index, true)
+    if last then return last + 1 end
   end
 end)
 
@@ -59,7 +57,7 @@ define('string', singlequoted + doublequoted + longstring)
 -- Comments.
 local eol = P'\r\n' + '\n'
 local line = (1 - S'\r\n\f')^0 * eol^-1
-local soi = P(function(s, i) return i == 1 and i end)
+local soi = P(function(_, i) return i == 1 and i end)
 local shebang = soi * '#!' * line
 local singleline = P'--' * line
 local multiline = P'--' * longstring
@@ -82,8 +80,20 @@ define('keyword', (P'break' + 'do' + 'elseif' + 'else' + 'end' + 'for'
   + 'function' + 'if' + 'in' + 'local' + 'repeat' + 'return' + 'then'
   + 'until' + 'while') * B)
 
--- Identifiers.
-define('identifier', I * (I + D + '.')^0)
+-- Identifiers - Sometimes it's very convenient to match for example "io.write"
+-- as one token instead of three, however this is not really a lexer's job. As
+-- a compromise we'll let the caller choose by passing a table of options with
+-- the key "join_identifiers" and the value "true":
+local ident = I * (I + D)^0
+local expr = ('.' * ident)^0
+define('identifier', lpeg.Cmt(ident * lpeg.Carg(1),
+  function(input, index, options)
+    if options and options.join_identifiers then
+      return expr:match(input, index)
+    else
+      return index
+    end
+  end))
 
 -- Define an `error' token kind that consumes one character and enables
 -- the lexer to resume as a last resort for dealing with unknown input.

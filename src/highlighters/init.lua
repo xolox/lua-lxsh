@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define syntax highlighters.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 10, 2011
+ Last Change: July 15, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
  The syntax highlighters in the LXSH module decorate the token streams produced
@@ -87,8 +87,8 @@ local url = protocol * remainder
 
 -- LPeg pattern to scan for e-mail addresses and URLs.
 local other = (1 - (email + url))^1
-local url_scanner = lpeg.Cc'email' * lpeg.C(email)
-                  + lpeg.Cc'url' * lpeg.C(url)
+local url_scanner = lpeg.C(email) / function(email) return 'email', email, email end
+                  + lpeg.C(url) / function(url) return 'url', url, url end
                   + lpeg.Carg(1) * lpeg.C(other)
 
 -- Constructor for syntax highlighting modes. {{{1
@@ -107,9 +107,9 @@ function lxsh.highlighters.new(context)
   local function iterator(kind, text, pattern)
     local index = 1
     while index <= #text do
-      local subkind, subtext = pattern:match(text, index, kind)
+      local subkind, subtext, url = pattern:match(text, index, kind)
       if subkind and subtext then
-        coroutine.yield(subkind, subtext)
+        coroutine.yield(subkind, subtext, url)
         index = index + #subtext
       end
     end
@@ -126,10 +126,14 @@ function lxsh.highlighters.new(context)
   -- Decorate the token stream produced by a lexer so that comment markers,
   -- URLs, e-mail addresses and escape sequences are recognized as well.
   local function decorator(context, subject)
-    for kind, text in context.lexer.gmatch(subject) do
-      if kind == 'comment' or kind == 'constant' or kind == 'string' then
+    for kind, text in context.lexer.gmatch(subject, { join_identifiers = true }) do
+      -- Check to see if this token has documentation.
+      local docs = context.docs[text]
+      if docs then
+        coroutine.yield('library', text, docs)
+      elseif kind == 'comment' or kind == 'constant' or kind == 'string' then
         -- Identify e-mail addresses and URLs.
-        for kind, text in producer(iterator, kind, text, url_scanner) do
+        for kind, text, url in producer(iterator, kind, text, url_scanner) do
           if kind == 'comment' then
             -- Identify comment markers.
             iterator(kind, text, comment_scanner)
@@ -137,7 +141,7 @@ function lxsh.highlighters.new(context)
             -- Identify escape sequences.
             iterator(kind, text, escape_scanner)
           else
-            coroutine.yield(kind, text)
+            coroutine.yield(kind, text, url)
           end
         end
       else
@@ -154,16 +158,9 @@ function lxsh.highlighters.new(context)
     local options = type(options) == 'table' and options or {}
     if not options.colors then options.colors = lxsh.colors.earendel end
 
-    for kind, text in producer(decorator, context, subject) do
-      local doclink = context.docs[text]
+    for kind, text, url in producer(decorator, context, subject) do
       local html
-      if doclink then
-        local template = '<a href="%s" %s="%s">%s</a>'
-        local attr = options.external and 'class' or 'style'
-        local value = options.external and 'library' or options.colors.library
-        html = template:format(doclink, attr, value, text)
-      elseif kind == 'email' or kind == 'url' then
-        local url = text
+      if url then
         if url:find '@' and not url:find '://' then
           if not url:find '^mailto:' then
             url = 'mailto:' .. url
@@ -171,11 +168,13 @@ function lxsh.highlighters.new(context)
           url = obfuscate(url)
           text = obfuscate(text)
         end
-        html = '<a href="' .. url .. '"'
-        if options.colors.url and not options.external then
-          html = html .. ' style="' .. options.colors.url .. '"'
+        if kind == 'url' or kind == 'email' then
+          html = ('<a href="%s">%s</a>'):format(url, text)
+        else
+          local attr = options.external and 'class' or 'style'
+          local value = options.external and kind or options.colors[kind]
+          html = ('<a href="%s" %s="%s">%s</a>'):format(url, attr, value, text)
         end
-        html = html .. '>' .. text .. '</a>'
       else
         html = htmlencode(text)
         if options.encodews then
@@ -211,6 +210,9 @@ end
 
 -- Style sheet generator. {{{1
 
+-- Generate the HTML to include the LXSH style sheets (CSS files) and
+-- optionally the JavaScript for the style sheet switcher.
+
 function lxsh.highlighters.includestyles(default, includeswitcher)
   local template = '<link rel="%s" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/%s.css" title="%s">'
   local output = {}
@@ -224,24 +226,25 @@ function lxsh.highlighters.includestyles(default, includeswitcher)
   return table.concat(output, '\n')
 end
 
+-- Generate a CSS style sheet from an LXSH color scheme.
+
 function lxsh.highlighters.stylesheet(name)
-  local colors = require('lxsh.colors.' .. name)
   local keys = {}
-  for k in pairs(colors) do
+  for k in pairs(lxsh.colors[name]) do
     keys[#keys + 1] = k
   end
   table.sort(keys)
   local output = {}
   for _, key in ipairs(keys) do
     if key == 'default' then
-      output[#output + 1] = ('.sourcecode { %s; }'):format(colors[key])
+      output[#output + 1] = ('.sourcecode { %s; }'):format(lxsh.colors[name][key])
     elseif key == 'url' then
-      output[#output + 1] = ('.sourcecode a:link, .sourcecode a:visited { %s; }'):format(colors[key])
+      output[#output + 1] = ('.sourcecode a:link, .sourcecode a:visited { %s; }'):format(lxsh.colors[name][key])
     elseif key == 'library' then
-      local styles = (colors[key] .. ';'):gsub(';', ' !important;')
+      local styles = (lxsh.colors[name][key] .. ';'):gsub(';', ' !important;')
       output[#output + 1] = ('.sourcecode .%s { %s }'):format(key, styles)
     else
-      output[#output + 1] = ('.sourcecode .%s { %s; }'):format(key, colors[key])
+      output[#output + 1] = ('.sourcecode .%s { %s; }'):format(key, lxsh.colors[name][key])
     end
   end
   return table.concat(output, '\n')

@@ -50,9 +50,11 @@ If you want to call a lexer or access an LPeg pattern defined by the lexer you c
 
 Lexers define the following functions:
 
- * `lexer.find(subject, init)` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the last matched character
- * `lexer.match(subject, init)` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the matched text
- * `lexer.gmatch(subject)` returns an iterator that produces two values on each iteration: the token kind and the matched text
+ * `lexer.find(subject [, init [, options ]])` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the last matched character
+ * `lexer.match(subject [, init [, options ]])` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the matched text
+ * `lexer.gmatch(subject [, options])` returns an iterator that produces two values on each iteration: the token kind and the matched text
+
+When `options` is given it should be a table of options that can be used to configure lexers. Currently only one option is defined: When you pass `join_identifiers=true` to the Lua lexer, expressions like `io.write` will be matched as a single identifier instead of the sequence (identifier `io`, operator `.`, identifier `write`).
 
 The syntax highlighters can be used as follows:
 
@@ -104,7 +106,7 @@ If you have questions, bug reports, suggestions, etc. the author can be contacte
 ## License
 
 This software is licensed under the [MIT license][mit].  
-© 2010 Peter Odding &lt;<peter@peterodding.com>&gt;.
+© 2011 Peter Odding &lt;<peter@peterodding.com>&gt;.
 
 [lexing]: http://en.wikipedia.org/wiki/Lexical_analysis
 [highlighting]: http://en.wikipedia.org/wiki/Syntax_highlighting

@@ -3,15 +3,13 @@
  Lexer for C source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 10, 2011
+ Last Change: July 15, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
 
 local lxsh = require 'lxsh'
 local lpeg = require 'lpeg'
-local C = lpeg.C
-local Cc = lpeg.Cc
 local P = lpeg.P
 local R = lpeg.R
 local S = lpeg.S

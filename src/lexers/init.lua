@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define lexers using LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 10, 2011
+ Last Change: July 11, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -39,24 +39,24 @@ function lxsh.lexers.new(language)
 
   -- The basic function for lexical analysis, it takes a subject string and
   -- optional index and returns a token type and the last index of the match.
-  function lexer.find(subject, init)
-    local kind, after = any:match(subject, init)
+  function lexer.find(subject, init, options)
+    local kind, after = any:match(subject, init, options)
     if kind and after then return kind, after - 1 end
   end
 
   -- Convenience function that returns token type and matched text.
-  function lexer.match(subject, init)
-    local kind, after = any:match(subject, init)
+  function lexer.match(subject, init, options)
+    local kind, after = any:match(subject, init, options)
     if kind and after then
       return kind, subject:sub(init, after - 1)
     end
   end
 
   -- Return an iterator that produces (kind, text) on each iteration.
-  function lexer.gmatch(subject)
+  function lexer.gmatch(subject, options)
     local index = 1
     return function()
-      local kind, after = any:match(subject, index)
+      local kind, after = any:match(subject, index, options)
       if kind and after then
         local text = subject:sub(index, after - 1)
         index = after

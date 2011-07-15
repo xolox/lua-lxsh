@@ -3,7 +3,7 @@
  Unit tests for the lexers of the LXSH module.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 9, 2011
+ Last Change: July 16, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -27,19 +27,19 @@ local function quote_string(s)
 end
 
 -- Check that token stream returned by lexer matches expected output.
-local function check_tokens(iterator, table)
+local function check_tokens(iterator, values)
   local i = 0
   for kind, text in iterator do
     i = i + 1
     if verbose then
-      print("Checking", table[i][1])
-      print(string.format(" - Expecting (%s, %s)", table[i][1], quote_string(table[i][2])))
+      print("Checking", values[i][1])
+      print(string.format(" - Expecting (%s, %s)", values[i][1], quote_string(values[i][2])))
       print(string.format(" - Received  (%s, %s)", kind, quote_string(text)))
     end
-    assert(table[i][1] == kind)
-    assert(table[i][2] == text)
+    assert(values[i][1] == kind)
+    assert(values[i][2] == text)
   end
-  assert(i == #table)
+  assert(i == #values)
 end
 
 -- Tests for the Lua lexer. {{{1
@@ -211,6 +211,16 @@ check_tokens(lua_lexer.gmatch(keywords), {
   { 'keyword', 'then' }, { 'whitespace', ' ' },
   { 'keyword', 'until' }, { 'whitespace', ' ' },
   { 'keyword', 'while' },
+})
+
+-- Identifiers. {{{1
+check_tokens(lua_lexer.gmatch('io.write'), {
+  { 'identifier', 'io' },
+  { 'operator', '.' },
+  { 'identifier', 'write' },
+})
+check_tokens(lua_lexer.gmatch('io.write', {join_identifiers=true}), {
+  { 'identifier', 'io.write' },
 })
 
 -- Tests for the C lexer. {{{1
