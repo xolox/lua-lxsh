@@ -1,3 +1,9 @@
+# Makefile for the Lua LXSH module.
+# 
+# Author: Peter Odding <peter@peterodding.com>
+# Last Change: July 16, 2011
+# URL: http://peterodding.com/code/lua/lxsh/
+
 VERSION = $(shell grep _VERSION src/init.lua | cut "-d'" -f 2)
 RELEASE = $(VERSION)-1
 PACKAGE = lxsh-$(RELEASE)
@@ -38,4 +44,4 @@ rockspec: package
 		> $(PACKAGE).rockspec
 	@echo Generated $(PACKAGE).rockspec
 
-.PHONY: demo test package
+.PHONY: demo test links package

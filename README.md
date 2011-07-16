@@ -12,7 +12,7 @@ As you can see in the above examples the highlighters replace standard library i
 
 The easiest way to download and install LXSH is using [LuaRocks][luarocks]:
 
-    $ luarocks install http://peterodding.com/code/lua/lxsh/downloads/lxsh-0.6.1-1.rockspec
+    $ luarocks install http://peterodding.com/code/lua/lxsh/downloads/lxsh-0.7-1.rockspec
 
 If you don't have LuaRocks installed you can [download the latest release][zipball] directly from GitHub as a ZIP archive. To install create an `lxsh` directory in your [$LUA_PATH][lua_path] and copy the contents of the `src` directory from the ZIP archive to the `lxsh` directory so that you end up with the following structure:
 

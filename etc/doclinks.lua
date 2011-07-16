@@ -14,13 +14,29 @@ local include_all_manpages = false
 -- Lua 5.1 reference manual and the Lua/APR documentation.
 local http = require 'socket.http'
 
+-- Downloaded pages are cached in the following directory.
+local tempdir = os.getenv('TEMP') or os.getenv('TMP') or '/tmp'
+
 function message(...)
   io.stderr:write(string.format(...), '\n')
 end
 
 function download(url)
-  message("Fetching %s ..", url)
-  return http.request(url)
+  local fname = tempdir .. '/' .. url:gsub('[^A-Za-z0-9_.-]', function(chr)
+    return string.format('%%%02x', chr:byte())
+  end)
+  local handle = io.open(fname)
+  if handle then
+    message("Using cached %s ..", url)
+    return handle:read '*a'
+  else
+    handle = io.open(fname, 'w')
+    message("Fetching %s ..", url)
+    local html = http.request(url)
+    handle:write(html)
+    handle:close()
+    return html
+  end
 end
 
 -- Manually defined documentation links (LPeg & C standard library). {{{1
@@ -245,6 +261,7 @@ local c_docs = {
   wctomb = "http://linux.die.net/man/3/wctomb",
 }
 local lua_docs = {
+  -- LPeg.
   ['lpeg.match'] = 'http://www.inf.puc-rio.br/~roberto/lpeg/#f-match',
   ['lpeg.type'] = 'http://www.inf.puc-rio.br/~roberto/lpeg/#f-type',
   ['lpeg.version'] = 'http://www.inf.puc-rio.br/~roberto/lpeg/#f-version',
@@ -271,7 +288,25 @@ local lua_docs = {
   ['lpeg.Cs'] = 'http://www.inf.puc-rio.br/~roberto/lpeg/#cap-s',
   ['lpeg.Cs'] = 'http://www.inf.puc-rio.br/~roberto/lpeg/#cap-s',
   ['lpeg.Cs'] = 'http://www.inf.puc-rio.br/~roberto/lpeg/#cap-s',
+  -- LuaFileSystem.
+  ['lfs.attributes'] = 'http://keplerproject.github.com/luafilesystem/manual.html#attributes',
+  ['lfs.chdir'] = 'http://keplerproject.github.com/luafilesystem/manual.html#chdir',
+  ['lfs.lock_dir'] = 'http://keplerproject.github.com/luafilesystem/manual.html#chdir',
+  ['lfs.currentdir'] = 'http://keplerproject.github.com/luafilesystem/manual.html#currentdir',
+  ['lfs.dir'] = 'http://keplerproject.github.com/luafilesystem/manual.html#dir',
+  ['lfs.lock'] = 'http://keplerproject.github.com/luafilesystem/manual.html#lock',
+  ['lfs.mkdir'] = 'http://keplerproject.github.com/luafilesystem/manual.html#mkdir',
+  ['lfs.rmdir'] = 'http://keplerproject.github.com/luafilesystem/manual.html#rmdir',
+  ['lfs.setmode'] = 'http://keplerproject.github.com/luafilesystem/manual.html#setmode',
+  ['lfs.symlinkattributes'] = 'http://keplerproject.github.com/luafilesystem/manual.html#symlinkattributes',
+  ['lfs.touch'] = 'http://keplerproject.github.com/luafilesystem/manual.html#touch',
+  ['lfs.unlock'] = 'http://keplerproject.github.com/luafilesystem/manual.html#unlock',
 }
+
+-- Miscellaneous functions. {{{1
+
+function compact(s) return s:gsub('%s+', '') end
+function striphtml(s) return s:gsub('<[^>]*>', '') end
 
 -- Scan the Lua reference manual for documentation links. {{{1
 local lua_refman = 'http://www.lua.org/manual/5.1/manual.html'
@@ -296,15 +331,38 @@ for id in download(lua_apr_docs):gmatch 'name="(apr%.[A-Za-z0-9_]+)"' do
   lua_docs[id] = lua_apr_docs .. '#' .. id
 end
 
+-- Scan the LuaSocket reference manual. {{{1
+local sections = 'dns ftp http ltn12 mime smtp socket tcp udp url'
+local luasocket_root = 'http://w3.impa.br/~diego/software/luasocket/'
+for section in sections:gmatch '%S+' do
+  local url = luasocket_root .. section .. '.html'
+  for anchor, fragment in download(url):gmatch '<p%s+class=name%s+id=([^>]+)>(.-)</p>' do
+    fragment = compact(striphtml(fragment))
+    local id = fragment:match '([A-Za-z_][A-Za-z_0-9.:]*)[({]'
+    if id then lua_docs[id] = url .. '#' .. anchor:gsub('[\'"]', '') end
+  end
+end
+
+-- Scan the Penlight function index. {{{1
+local penlight = 'http://stevedonovan.github.com/Penlight/'
+local source = download(penlight .. 'function_index.html')
+for html in source:gmatch '<li>(.-)</li>' do
+  local url = html:match 'href="(.-)"'
+  local text = compact(striphtml(html))
+  local id, mod = text:match '([A-Za-z_][A-Za-z_0-9.:]*)%((.-)%)'
+  if url and id and mod then
+    lua_docs[mod .. '.' .. id] = penlight .. url
+  end
+end
+
 -- Scan section 3 (library calls) of the Linux man pages (disabled). {{{1
 
 -- The following code is not enabled by default because it results in a 1,1 MB
 -- Lua script which may be a bit much to commit or include in installations.
 local manpages = 'http://linux.die.net/man/3/'
 if include_all_manpages then
-  local source = http.request(manpages)
-  local body = source:match '<dl[^>]*>(.-)</dl>'
-  for id in body:gmatch 'href="([A-Za-z0-9_]+)"' do
+  local source = download(manpages):match '<dl[^>]*>(.-)</dl>'
+  for id in source:gmatch 'href="([A-Za-z0-9_]+)"' do
     c_docs[id] = manpages .. id
   end
 end

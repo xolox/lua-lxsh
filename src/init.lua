@@ -27,7 +27,7 @@ local function autoload(path, constructor)
 end
 
 local lxsh = {
-  _VERSION = '0.6.10',
+  _VERSION = '0.7',
   lexers = autoload('lxsh.lexers', true),
   highlighters = autoload('lxsh.highlighters', true),
   colors = autoload 'lxsh.colors',
@@ -35,8 +35,8 @@ local lxsh = {
 }
 
 -- Register LXSH in the global scope if it doesn't clash with an existing
--- global variable and bypass strict.lua because "we know what we're doing" (in
--- other words, "lua -llxsh" is very convenient).
+-- global variable and bypass strict.lua because "we know what we're doing"
+-- (in other words, "lua -llxsh" is very convenient).
 if not rawget(_G, 'lxsh') then
   rawset(_G, 'lxsh', lxsh)
 end
