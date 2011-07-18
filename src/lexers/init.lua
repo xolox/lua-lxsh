@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define lexers using LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 11, 2011
+ Last Change: July 17, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -17,6 +17,7 @@ function lxsh.lexers.new(language)
   -- Table of LPeg patterns to match all kinds of tokens.
   local patterns = {}
   local lexer = { language = language, patterns = patterns }
+  local any
 
   -- Closure to define token type given name and LPeg pattern.
   local function define(name, patt)

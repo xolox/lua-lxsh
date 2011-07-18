@@ -1,64 +1,53 @@
 -- Run this Lua script from the project root.
 
-function readfile(path)
+local lxsh = require 'lxsh'
+local delete_intermediates = true
+
+local function readfile(path)
   local handle = assert(io.open(path))
   local data = assert(handle:read '*a')
-  assert(handle:close()); return data
+  assert(handle:close())
+  return data
 end
 
-function writefile(path, colors, data)
+local function writefile(path, data)
   local handle = assert(io.open(path, 'w'))
-  local lxsh = require 'lxsh'
-  assert(handle:write([[
-<html>
-<head>
-<style type="text/css">
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-pre {
-  margin: 0;
-  padding: 1em;
-  height: auto !important; /* real browsers */
-  height: 100%; /* IE6: treaded as min-height*/
-  min-height: 100%; /* real browsers */
-}
-</style>
-]],
-lxsh.highlighters.includestyles(colors, true),
-'\n</head>\n<body>\n'))
-  assert(handle:write(data))
-  assert(handle:write '\n</body>\n</html>\n')
+  handle:write(data)
   local nbytes = handle:seek()
   assert(handle:close())
   return nbytes
 end
 
-for _, colors in ipairs { 'earendel', 'slate', 'wiki' } do
-
-  options = { external = true }
-
-  -- Highlight example Lua source code (from my Lua/APR binding).
-  local highlighter = require 'lxsh.highlighters.lua'
-  local input = readfile 'examples/apr.lua'
-  local outfile = 'examples/' .. colors .. '/apr.lua.html'
-  local nbytes = writefile(outfile, colors, highlighter(input, options))
-  print(('Wrote %iK to %s'):format(nbytes/1024, outfile))
-
-  -- Highlight example Lua source code copied from the interactive prompt.
-  local highlighter = require 'lxsh.highlighters.lua'
-  local input = readfile 'examples/prompt.lua'
-  local outfile = 'examples/' .. colors .. '/prompt.lua.html'
-  local nbytes = writefile(outfile, colors, highlighter(input, options))
-  print(('Wrote %iK to %s'):format(nbytes/1024, outfile))
-
-  -- Highlight example C source code (also from my Lua/APR binding).
-  local highlighter = require 'lxsh.highlighters.c'
-  local input = readfile 'examples/lua_apr.c'
-  local outfile = 'examples/' .. colors .. '/lua_apr.c.html'
-  local nbytes = writefile(outfile, colors, highlighter(input, options))
-  print(('Wrote %iK to %s'):format(nbytes/1024, outfile))
-
+for _, formatter in ipairs { lxsh.formatters.html, lxsh.formatters.rtf, lxsh.formatters.latex } do
+  for _, colors in ipairs { 'earendel', 'slate', 'wiki' } do
+    local function demo(infile, outfile, highlighter)
+      local input = readfile(infile)
+      local nbytes = writefile(outfile, highlighter(input, {
+        demo = true,
+        external = true,
+        colors = lxsh.colors[colors],
+        formatter = formatter,
+      }))
+      io.stderr:write(('Wrote %iK to %s!\n'):format(nbytes/1024, outfile))
+      if outfile:find '%.tex$' then
+        -- Try to run the LaTeX PDF compiler (tested on Ubuntu 10.04 with texlive).
+        local outdir, filename = outfile:match '^(.-)([^/]*)$'
+        local command = 'pdflatex -interaction errorstopmode -halt-on-error ' .. filename .. ' >/dev/null 2>&1'
+        io.stderr:write(" - Compiling ", outfile:gsub('%.tex$', '.pdf'), ": ")
+        local status = os.execute('cd ' .. outdir .. ' && ' .. command .. ' && ' .. command)
+        io.stderr:write(status == 0 and "OK" or "Failed! (do you have LaTeX installed?)", "\n")
+        -- Cleanup temporary files.
+        if delete_intermediates and status == 0 then os.remove(outfile) end
+        os.remove((outfile:gsub('%.tex$', '.aux')))
+        os.remove((outfile:gsub('%.tex$', '.log')))
+        os.remove((outfile:gsub('%.tex$', '.out')))
+      end
+    end
+    -- Highlight example Lua source code (from my Lua/APR binding).
+    demo('examples/apr.lua', 'examples/' .. colors .. '/apr.lua' .. formatter.extension, lxsh.highlighters.lua)
+    -- Highlight example Lua source code copied from the interactive prompt.
+    demo('examples/prompt.lua', 'examples/' .. colors .. '/prompt.lua' .. formatter.extension, lxsh.highlighters.lua)
+    -- Highlight example C source code (also from my Lua/APR binding).
+    demo('examples/lua_apr.c', 'examples/' .. colors .. '/lua_apr.c' .. formatter.extension, lxsh.highlighters.c)
+  end
 end

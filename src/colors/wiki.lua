@@ -4,17 +4,18 @@
  color scheme used on http://lua-users.org/wiki/.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: January 14, 2011
+ Last Change: July 17, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
 
 return {
-  comment      = 'color: #00A000',
-  constant     = 'color: #009090',
-  default      = 'color: black; background: white',
-  keyword      = 'color: #000080; font-weight: bold',
-  library      = 'color: #900090; text-decoration: none',
-  marker       = 'background: #ffff00',
-  prompt       = 'color: #00A000',
+  comment = { color = 0x00A000 },
+  constant = { color = 0x009090 },
+  default = { color = 0x000000, background = 0xffffff },
+  keyword = { color = 0x000080, bold = true },
+  library = { color = 0x900090 },
+  marker = { background = 0xffff00 },
+  prompt = { color = 0x00A000 },
+  url = { color = 0x0000FF, underline = true }
 }

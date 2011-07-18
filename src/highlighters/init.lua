@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define syntax highlighters.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 15, 2011
+ Last Change: July 17, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
  The syntax highlighters in the LXSH module decorate the token streams produced
@@ -35,37 +35,6 @@
 
 local lxsh = require 'lxsh'
 local lpeg = require 'lpeg'
-
--- Internal functions. {{{1
-
-local function obfuscate(email)
-  return (email:gsub('.', function(c)
-    return ('&#%d;'):format(c:byte())
-  end))
-end
-
-local entities = { ['<'] = '&lt;', ['>'] = '&gt;', ['&'] = '&amp;' }
-local function htmlencode(text)
-  return (text:gsub('[<>&]', entities))
-end
-
-local function fixspaces(text)
-  return (text:gsub(' +', function(space)
-    return string.rep('&nbsp;', #space)
-  end))
-end
-
-local function wrap(token, text, options)
-  if token then
-    local attr = options.external and 'class' or 'style'
-    local value = options.external and token or options.colors[token]
-    if value then
-      local template = '<span %s="%s">%s</span>'
-      return template:format(attr, value, text)
-    end
-  end
-  return text
-end
 
 -- LPeg patterns to decorate the token stream (richer highlighting). {{{1
 
@@ -125,7 +94,7 @@ function lxsh.highlighters.new(context)
 
   -- Decorate the token stream produced by a lexer so that comment markers,
   -- URLs, e-mail addresses and escape sequences are recognized as well.
-  local function decorator(context, subject)
+  local function decorator(subject)
     for kind, text in context.lexer.gmatch(subject, { join_identifiers = true }) do
       -- Check to see if this token has documentation.
       local docs = context.docs[text]
@@ -150,104 +119,41 @@ function lxsh.highlighters.new(context)
     end
   end
 
-  -- Highlighter function (depends on lexer and decorator as upvalues). {{{2
+  -- Highlighter function (depends on context and decorator as upvalues). {{{2
 
   return function(subject, options)
-
     local output = {}
     local options = type(options) == 'table' and options or {}
+    local aliases = {
+      email = 'url',
+      number = 'constant',
+      string = 'constant',
+      character = 'string',
+    }
     if not options.colors then options.colors = lxsh.colors.earendel end
-
-    for kind, text, url in producer(decorator, context, subject) do
-      local html
-      if url then
-        if url:find '@' and not url:find '://' then
-          if not url:find '^mailto:' then
-            url = 'mailto:' .. url
-          end
-          url = obfuscate(url)
-          text = obfuscate(text)
-        end
-        if kind == 'url' or kind == 'email' then
-          html = ('<a href="%s">%s</a>'):format(url, text)
-        else
-          local attr = options.external and 'class' or 'style'
-          local value = options.external and kind or options.colors[kind]
-          html = ('<a href="%s" %s="%s">%s</a>'):format(url, attr, value, text)
-        end
-      else
-        html = htmlencode(text)
-        if options.encodews then
-          html = fixspaces(html)
-        end
-        if kind == 'string' then
-          kind = 'constant'
-        end
-        if kind ~= 'whitespace' then
-          html = wrap(kind, html, options)
+    subject = subject:gsub('\r\n', '\n')
+    for kind, text, url in producer(decorator, subject) do
+      -- Automatically prefix "mailto:" to plain e-mail addresses.
+      if (url or ''):find '@' and not (url:find '://' or url:find '^mailto:') then
+        url = 'mailto:' .. url
+      end
+      if not options.colors[kind] then
+        -- Resolve aliases into concrete styles.
+        while true do
+          local alias = aliases[kind]
+          if not alias then break end
+          kind = alias
         end
       end
-      output[#output + 1] = html
+      output[#output + 1] = options.formatter.token(kind, text, url, options)
     end
-
-    local wrapper = options.wrapper or 'pre'
-    local elem = '<' .. wrapper
-    if not options.external then
-      elem = elem .. ' style="' .. options.colors.default .. '"'
+    output = options.formatter.wrap(context, output, options)
+    if options.demo then
+      output = options.formatter.demo(output, options)
     end
-    table.insert(output, 1, elem .. ' class="sourcecode ' .. context.lexer.language .. '">')
-    table.insert(output, '</' .. wrapper .. '>')
-    local html = table.concat(output)
-
-    if options.encodews then
-      html = html:gsub('\r?\n', '<br>')
-    end
-
-    return html
+    return output
   end
 
-end
-
--- Style sheet generator. {{{1
-
--- Generate the HTML to include the LXSH style sheets (CSS files) and
--- optionally the JavaScript for the style sheet switcher.
-
-function lxsh.highlighters.includestyles(default, includeswitcher)
-  local template = '<link rel="%s" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/%s.css" title="%s">'
-  local output = {}
-  for _, style in ipairs { 'earendel', 'slate', 'wiki' } do
-    local rel = style == default and 'stylesheet' or 'alternate stylesheet'
-    output[#output + 1] = template:format(rel, style, style:gsub('^%w', string.upper))
-  end
-  if includeswitcher then
-    output[#output + 1] = '<script type="text/javascript" src="http://peterodding.com/code/lua/lxsh/styleswitcher.js"></script>'
-  end
-  return table.concat(output, '\n')
-end
-
--- Generate a CSS style sheet from an LXSH color scheme.
-
-function lxsh.highlighters.stylesheet(name)
-  local keys = {}
-  for k in pairs(lxsh.colors[name]) do
-    keys[#keys + 1] = k
-  end
-  table.sort(keys)
-  local output = {}
-  for _, key in ipairs(keys) do
-    if key == 'default' then
-      output[#output + 1] = ('.sourcecode { %s; }'):format(lxsh.colors[name][key])
-    elseif key == 'url' then
-      output[#output + 1] = ('.sourcecode a:link, .sourcecode a:visited { %s; }'):format(lxsh.colors[name][key])
-    elseif key == 'library' then
-      local styles = (lxsh.colors[name][key] .. ';'):gsub(';', ' !important;')
-      output[#output + 1] = ('.sourcecode .%s { %s }'):format(key, styles)
-    else
-      output[#output + 1] = ('.sourcecode .%s { %s; }'):format(key, lxsh.colors[name][key])
-    end
-  end
-  return table.concat(output, '\n')
 end
 
 -- }}}1

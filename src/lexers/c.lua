@@ -3,7 +3,7 @@
  Lexer for C source code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 15, 2011
+ Last Change: July 17, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -43,9 +43,8 @@ define('identifier', (W + '_') * A^0)
 define('preprocessor', '#' * (1 - S'\r\n\f\\' + '\\' * (newline + 1))^0 * newline^-1)
 
 -- Character and string literals.
-local chr = "'" * ((1 - S"\\\r\n\f'") + escape) * "'"
-local str = '"' * ((1 - S'\\\r\n\f"') + escape)^0 * '"'
-define('constant', chr + str)
+define('character', "'" * ((1 - S"\\\r\n\f'") + escape) * "'")
+define('string', '"' * ((1 - S'\\\r\n\f"') + escape)^0 * '"')
 
 -- Comments.
 local slc = '//' * (1 - endline)^0 * newline^-1

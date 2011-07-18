@@ -3,7 +3,7 @@
  Unit tests for the lexers of the LXSH module.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 16, 2011
+ Last Change: July 18, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -266,17 +266,17 @@ check_tokens(c_lexer.gmatch [[
 "multi line\
 string literal"
 ]], {
-  { 'constant', "'c'" },
+  { 'character', "'c'" },
   { 'whitespace', '\n' },
-  { 'constant', "'\\n'" },
+  { 'character', "'\\n'" },
   { 'whitespace', '\n' },
-  { 'constant', "'\\000'" },
+  { 'character', "'\\000'" },
   { 'whitespace', '\n' },
-  { 'constant', "'\\xFF'" },
+  { 'character', "'\\xFF'" },
   { 'whitespace', '\n' },
-  { 'constant', '"string literal"' },
+  { 'string', '"string literal"' },
   { 'whitespace', '\n' },
-  { 'constant', '"multi line\\\nstring literal"' },
+  { 'string', '"multi line\\\nstring literal"' },
   { 'whitespace', '\n' },
 })
 

@@ -4,7 +4,7 @@
  and perform syntax highlighting based on the defined lexers.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 16, 2011
+ Last Change: July 18, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -27,9 +27,10 @@ local function autoload(path, constructor)
 end
 
 local lxsh = {
-  _VERSION = '0.7',
+  _VERSION = '0.8',
   lexers = autoload('lxsh.lexers', true),
   highlighters = autoload('lxsh.highlighters', true),
+  formatters = autoload 'lxsh.formatters',
   colors = autoload 'lxsh.colors',
   docs = autoload 'lxsh.docs',
 }
