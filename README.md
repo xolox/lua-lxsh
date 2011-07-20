@@ -89,7 +89,7 @@ As you may have noticed in the above examples, the syntax highlighters replace s
 
 The easiest way to download and install LXSH is using [LuaRocks] [luarocks]:
 
-    $ luarocks install http://peterodding.com/code/lua/lxsh/downloads/lxsh-0.8-1.rockspec
+    $ luarocks install lxsh
 
 If you don't have LuaRocks installed you can [download the latest release] [zipball] directly from GitHub as a ZIP archive. To install create an `lxsh` directory in your [$LUA_PATH] [lua_path] and copy the contents of the `src` directory from the ZIP archive to the `lxsh` directory so that you end up with the following structure:
 

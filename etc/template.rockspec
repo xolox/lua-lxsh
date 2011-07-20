@@ -17,7 +17,7 @@ source = {
 }
 
 description = {
-  summary = 'LXSH - Lexing & syntax highlighting in Lua',
+  summary = 'Lexing & syntax highlighting in Lua',
   detailed = [[
     LXSH is a collection of lexers and syntax highlighters written in Lua using
     the excellent pattern-matching library LPeg. The syntax highlighters can
