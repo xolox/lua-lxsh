@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define lexers using LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 17, 2011
+ Last Change: July 20, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -55,13 +55,15 @@ function lxsh.lexers.new(language)
 
   -- Return an iterator that produces (kind, text) on each iteration.
   function lexer.gmatch(subject, options)
-    local index = 1
+    local index, lnum, cnum = 1, 1, 1
     return function()
       local kind, after = any:match(subject, index, options)
       if kind and after then
         local text = subject:sub(index, after - 1)
+        local oldlnum, oldcnum = lnum, cnum
         index = after
-        return kind, text
+        lnum, cnum = lxsh.sync(text, lnum, cnum)
+        return kind, text, oldlnum, oldcnum
       end
     end
   end

@@ -102,26 +102,26 @@ If you don't have LuaRocks installed you can [download the latest release] [zipb
 
 ## Usage
 
-If you want to call a lexer or access an LPeg pattern defined by the lexer you can do so as follows (this example demonstrates the Lua lexer but the C lexer works the same):
+If you want to call a lexer or access an LPeg pattern defined by a lexer you can do so as follows (this example demonstrates the Lua lexer but the C lexer works the same):
 
     > -- Load the LXSH module.
     > require 'lxsh'
 
     > -- Run the lexer on a string of source code.
-    > for kind, text in lxsh.lexers.lua.gmatch 'i = i + 1 -- example' do
-    >>  print(kind, text)
+    > for kind, text, lnum, cnum in lxsh.lexers.lua.gmatch 'i = i + 1\n-- example' do
+    >>  print(string.format('%s: %q (%i:%i)', kind, text, lnum, cnum))
     >> end
-    identifier  i
-    whitespace   
-    operator    =
-    whitespace   
-    identifier  i
-    whitespace   
-    operator    +
-    whitespace   
-    number      1
-    whitespace   
-    comment     -- example
+    identifier: "i" (1:1)
+    whitespace: " " (1:2)
+    operator:   "=" (1:3)
+    whitespace: " " (1:4)
+    identifier: "i" (1:5)
+    whitespace: " " (1:6)
+    operator:   "+" (1:7)
+    whitespace: " " (1:8)
+    number:     "1" (1:9)
+    whitespace: "\n" (1:10)
+    comment:    "-- example" (2:1)
 
     > -- Use one of the patterns defined by the lexer.
     > lxsh.lexers.lua.patterns.comment:match '--[=[ this is a long comment ]=]'
@@ -130,7 +130,7 @@ Lexers define the following functions:
 
  * `lexer.find(subject [, init [, options ]])` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the last matched character
  * `lexer.match(subject [, init [, options ]])` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the matched text
- * `lexer.gmatch(subject [, options])` returns an iterator that produces two values on each iteration: the token kind and the matched text
+ * `lexer.gmatch(subject [, options])` returns an iterator that produces four values on each iteration: the kind of token (see below), the matched text, the starting line number and the starting column number (line and column numbers start at 1)
 
 When `options` is given it should be a table of options that can be used to configure lexers. Currently only one option is defined: When you pass `join_identifiers=true` to the Lua lexer, expressions like `io.write` will be matched as a single identifier instead of the sequence (identifier `io`, operator `.`, identifier `write`).
 

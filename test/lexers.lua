@@ -3,13 +3,17 @@
  Unit tests for the lexers of the LXSH module.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 18, 2011
+ Last Change: July 20, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
 
+local lxsh = require 'lxsh'
+
 -- Enable this to debug test failures.
 local verbose = false
+
+-- Miscellaneous functions. {{{1
 
 local escape_sequences = {
   ['\0'] = '\\0',
@@ -42,17 +46,35 @@ local function check_tokens(iterator, values)
   assert(i == #values)
 end
 
+-- Test lxsh.sync(). {{{1
+
+local l, c = lxsh.sync('')
+assert(l == 1 and c == 1)
+
+local l, c = lxsh.sync(' ')
+assert(l == 1 and c == 2)
+
+local l, c = lxsh.sync('\n')
+assert(l == 2 and c == 1)
+
+local l, c = lxsh.sync(' \n \n \n ')
+assert(l == 4 and c == 2)
+
+local l, c = lxsh.sync(' ', 13, 42)
+assert(l == 13 and c == 43)
+
+local l, c = lxsh.sync('\n', 13, 42)
+assert(l == 14 and c == 1)
+
 -- Tests for the Lua lexer. {{{1
 
-local lua_lexer = require 'lxsh.lexers.lua'
-
 -- Whitespace characters. {{{2
-check_tokens(lua_lexer.gmatch '\r\n\f\t\v ', {
+check_tokens(lxsh.lexers.lua.gmatch '\r\n\f\t\v ', {
   { 'whitespace', '\r\n\f\t\v ' },
 })
 
 -- Constants (true, false and nil). {{{2
-check_tokens(lua_lexer.gmatch 'true false nil', {
+check_tokens(lxsh.lexers.lua.gmatch 'true false nil', {
   { 'constant', 'true' },
   { 'whitespace', ' ' },
   { 'constant', 'false' },
@@ -61,7 +83,7 @@ check_tokens(lua_lexer.gmatch 'true false nil', {
 })
 
 -- Interactive prompt. {{{2
-check_tokens(lua_lexer.gmatch [[
+check_tokens(lxsh.lexers.lua.gmatch [[
 Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio
 > print "Hello world!"]], {
   { 'prompt', 'Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio' },
@@ -74,7 +96,7 @@ Lua 5.1.4  Copyright (C) 1994-2008 Lua.org, PUC-Rio
 })
 
 -- Numbers. {{{2
-check_tokens(lua_lexer.gmatch '1 3.14 1. .1 0x0123456789ABCDEF 1e5', {
+check_tokens(lxsh.lexers.lua.gmatch '1 3.14 1. .1 0x0123456789ABCDEF 1e5', {
   { 'number', '1' },
   { 'whitespace', ' ' },
   { 'number', '3.14' },
@@ -89,7 +111,7 @@ check_tokens(lua_lexer.gmatch '1 3.14 1. .1 0x0123456789ABCDEF 1e5', {
 })
 
 -- String literals. {{{2
-check_tokens(lua_lexer.gmatch [==[
+check_tokens(lxsh.lexers.lua.gmatch [==[
 'single quoted string'
 "double quoted string"
 [[long string]]
@@ -110,7 +132,7 @@ long string]]
 })
 
 -- Comments. {{{2
-check_tokens(lua_lexer.gmatch [==[
+check_tokens(lxsh.lexers.lua.gmatch [==[
 #!shebang line
 -- single line comment
 --[=[
@@ -133,7 +155,7 @@ comment
 
 -- Operators. {{{2
 local operators = 'not ... and .. ~= == >= <= or ] { = > ^ [ < ; ) * ( % } + - : , / . #'
-check_tokens(lua_lexer.gmatch(operators), {
+check_tokens(lxsh.lexers.lua.gmatch(operators), {
   { 'operator', 'not' },
   { 'whitespace', ' ' },
   { 'operator', '...' },
@@ -195,7 +217,7 @@ check_tokens(lua_lexer.gmatch(operators), {
 
 -- Keywords. {{{2
 local keywords = 'break do else elseif end for function if in local repeat return then until while'
-check_tokens(lua_lexer.gmatch(keywords), {
+check_tokens(lxsh.lexers.lua.gmatch(keywords), {
   { 'keyword', 'break' }, { 'whitespace', ' ' },
   { 'keyword', 'do' }, { 'whitespace', ' ' },
   { 'keyword', 'else' }, { 'whitespace', ' ' },
@@ -214,33 +236,31 @@ check_tokens(lua_lexer.gmatch(keywords), {
 })
 
 -- Identifiers. {{{1
-check_tokens(lua_lexer.gmatch('io.write'), {
+check_tokens(lxsh.lexers.lua.gmatch('io.write'), {
   { 'identifier', 'io' },
   { 'operator', '.' },
   { 'identifier', 'write' },
 })
-check_tokens(lua_lexer.gmatch('io.write', {join_identifiers=true}), {
+check_tokens(lxsh.lexers.lua.gmatch('io.write', {join_identifiers=true}), {
   { 'identifier', 'io.write' },
 })
 
 -- Tests for the C lexer. {{{1
 
-local c_lexer = require 'lxsh.lexers.c'
-
 -- Whitespace characters. {{{2
-check_tokens(c_lexer.gmatch '\r\n\f\t\v ', {
+check_tokens(lxsh.lexers.c.gmatch '\r\n\f\t\v ', {
   { 'whitespace', '\r\n\f\t\v ' },
 })
 
 -- Identifiers. {{{2
-check_tokens(c_lexer.gmatch 'variable=value', {
+check_tokens(lxsh.lexers.c.gmatch 'variable=value', {
   { 'identifier', 'variable' },
   { 'operator', '=' },
   { 'identifier', 'value' },
 })
 
 -- Preprocessor instructions. {{{2
-check_tokens(c_lexer.gmatch [[
+check_tokens(lxsh.lexers.c.gmatch [[
 #if
 #else
 #endif
@@ -257,7 +277,7 @@ check_tokens(c_lexer.gmatch [[
 })
 
 -- Character and string literals. {{{2
-check_tokens(c_lexer.gmatch [[
+check_tokens(lxsh.lexers.c.gmatch [[
 'c'
 '\n'
 '\000'
@@ -281,7 +301,7 @@ string literal"
 })
 
 -- Comments. {{{2
-check_tokens(c_lexer.gmatch [[
+check_tokens(lxsh.lexers.c.gmatch [[
 // single line comment
 /* multi
    line
@@ -293,7 +313,7 @@ check_tokens(c_lexer.gmatch [[
 })
 
 -- Operators. {{{2
-check_tokens(c_lexer.gmatch [[
+check_tokens(lxsh.lexers.c.gmatch [[
 >>=
 <<=
 --
@@ -433,7 +453,7 @@ check_tokens(c_lexer.gmatch [[
 })
 
 -- Numbers. {{{2
-check_tokens(c_lexer.gmatch [[
+check_tokens(lxsh.lexers.c.gmatch [[
 0x0123456789ABCDEFabcdef
 123456789
 01234567
@@ -465,7 +485,7 @@ check_tokens(c_lexer.gmatch [[
 })
 
 -- Keywords. {{{2
-check_tokens(c_lexer.gmatch [[
+check_tokens(lxsh.lexers.c.gmatch [[
 auto
 break
 case
