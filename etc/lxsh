@@ -1,0 +1,53 @@
+#!/usr/bin/env lua
+
+--[[
+
+ Command line interface for the LXSH syntax highlighters.
+
+ Author: Peter Odding <peter@peterodding.com>
+ Last Change: September 29, 2011
+ URL: http://peterodding.com/code/lua/lxsh/
+
+]]
+
+function main()
+  local lxsh = require 'lxsh'
+  -- Get and validate the command line arguments.
+  local infile = assert(arg[1],
+      "Please provide an input file as the 1st argument")
+  local outfile = assert(arg[2],
+      "Please provide an output file as the 2st argument")
+  -- Find the syntax highlighter for the input file's type.
+  local intype = fnamext(infile)
+  local highlighter = assert(lxsh.highlighters[intype],
+      string.format("Invalid input format '%s'! (expected one of 'c', 'lua', 'bib')", intype))
+  -- Find the formatter for the output file's type.
+  local outtype = fnamext(outfile)
+  local formatter = assert(lxsh.formatters[outtype],
+      string.format("Invalid output format '%s'! (expected one of 'html', 'tex', 'rtf')", outtype))
+  -- Generate the output file.
+  local input = readfile(infile)
+  local nbytes = writefile(outfile, highlighter(input, { formatter = formatter }))
+  io.stderr:write(('Wrote %iK to %s!\n'):format(nbytes/1024, outfile))
+end
+
+function fnamext(fname)
+  return fname:match('[^.]+$'):lower()
+end
+
+function readfile(path)
+  local handle = assert(io.open(path))
+  local data = assert(handle:read '*a')
+  assert(handle:close())
+  return data
+end
+
+function writefile(path, data)
+  local handle = assert(io.open(path, 'w'))
+  handle:write(data)
+  local nbytes = handle:seek()
+  assert(handle:close())
+  return nbytes
+end
+
+main()
