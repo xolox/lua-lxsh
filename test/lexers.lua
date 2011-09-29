@@ -3,7 +3,7 @@
  Unit tests for the lexers of the LXSH module.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 20, 2011
+ Last Change: September 29, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -235,7 +235,7 @@ check_tokens(lxsh.lexers.lua.gmatch(keywords), {
   { 'keyword', 'while' },
 })
 
--- Identifiers. {{{1
+-- Identifiers. {{{2
 check_tokens(lxsh.lexers.lua.gmatch('io.write'), {
   { 'identifier', 'io' },
   { 'operator', '.' },
@@ -551,6 +551,71 @@ while
   { 'keyword', 'void' }, { 'whitespace', '\n' },
   { 'keyword', 'volatile' }, { 'whitespace', '\n' },
   { 'keyword', 'while' }, { 'whitespace', '\n' },
+})
+
+-- Tests for the BibTeX lexer. {{{1
+
+check_tokens(lxsh.lexers.bib.gmatch [[
+@Book{abramowitz+stegun,
+ author    = "Milton {Abramowitz} and Irene A. {Stegun}",
+ title     = "Handbook of Mathematical Functions with
+              Formulas, Graphs, and Mathematical Tables",
+ publisher = "Dover",
+ year      =  1964,
+ address   = "New York",
+ edition   = "ninth Dover printing, tenth GPO printing"
+}
+]], {
+  { "entry", "@Book" },
+  { "delimiter", "{" },
+  { "identifier", "abramowitz" },
+  { "error", "+" },
+  { "identifier", "stegun" },
+  { "delimiter", "," },
+  { "whitespace", "\n " },
+  { "field", "author" },
+  { "whitespace", "    " },
+  { "operator", "=" },
+  { "whitespace", " " },
+  { "string", "\"Milton {Abramowitz} and Irene A. {Stegun}\"" },
+  { "delimiter", "," },
+  { "whitespace", "\n " },
+  { "field", "title" },
+  { "whitespace", "     " },
+  { "operator", "=" },
+  { "whitespace", " " },
+  { "string", "\"Handbook of Mathematical Functions with\n              Formulas, Graphs, and Mathematical Tables\"" },
+  { "delimiter", "," },
+  { "whitespace", "\n " },
+  { "field", "publisher" },
+  { "whitespace", " " },
+  { "operator", "=" },
+  { "whitespace", " " },
+  { "string", "\"Dover\"" },
+  { "delimiter", "," },
+  { "whitespace", "\n " },
+  { "field", "year" },
+  { "whitespace", "      " },
+  { "operator", "=" },
+  { "whitespace", "  " },
+  { "number", "1964" },
+  { "delimiter", "," },
+  { "whitespace", "\n " },
+  { "field", "address" },
+  { "whitespace", "   " },
+  { "operator", "=" },
+  { "whitespace", " " },
+  { "string", "\"New York\"" },
+  { "delimiter", "," },
+  { "whitespace", "\n " },
+  { "field", "edition" },
+  { "whitespace", "   " },
+  { "operator", "=" },
+  { "whitespace", " " },
+  { "string", "\"ninth Dover printing, tenth GPO printing\"" },
+  { "whitespace", "\n" },
+  { "delimiter", "}" },
+  { "whitespace", "\n" },
 })
 
 -- vim: ts=2 sw=2 et
