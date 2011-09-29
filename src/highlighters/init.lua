@@ -3,7 +3,7 @@
  Infrastructure to make it easier to define syntax highlighters.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 17, 2011
+ Last Change: September 29, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
  The syntax highlighters in the LXSH module decorate the token streams produced
@@ -68,8 +68,9 @@ function lxsh.highlighters.new(context)
   -- Implementation of decorated token stream (depends on lexer as upvalue). {{{2
 
   -- LPeg pattern to scan for escape sequences in character and string literals.
-  local escape_scanner = lpeg.Cc'escape' * lpeg.C(context.escape_sequence)
-                       + lpeg.Carg(1) * lpeg.C((1 - context.escape_sequence)^1)
+  local escape_scanner = context.escape_sequence and
+       (lpeg.Cc'escape' * lpeg.C(context.escape_sequence)
+      + lpeg.Carg(1) * lpeg.C((1 - context.escape_sequence)^1))
 
   -- Turn an LPeg pattern into an iterator that produces (kind, text) pairs.
   -- TODO Find a better name for this.
@@ -95,18 +96,20 @@ function lxsh.highlighters.new(context)
   -- Decorate the token stream produced by a lexer so that comment markers,
   -- URLs, e-mail addresses and escape sequences are recognized as well.
   local function decorator(subject)
+    local docs = context.docs
+    local has_escapes = context.has_escapes
     for kind, text in context.lexer.gmatch(subject, { join_identifiers = true }) do
       -- Check to see if this token has documentation.
-      local docs = context.docs[text]
-      if docs then
-        coroutine.yield('library', text, docs)
+      local url = docs and docs[text]
+      if url then
+        coroutine.yield('library', text, url)
       elseif kind == 'comment' or kind == 'constant' or kind == 'string' then
         -- Identify e-mail addresses and URLs.
         for kind, text, url in producer(iterator, kind, text, url_scanner) do
           if kind == 'comment' then
             -- Identify comment markers.
             iterator(kind, text, comment_scanner)
-          elseif context.has_escapes(kind, text) then
+          elseif has_escapes and has_escapes(kind, text) then
             -- Identify escape sequences.
             iterator(kind, text, escape_scanner)
           else
