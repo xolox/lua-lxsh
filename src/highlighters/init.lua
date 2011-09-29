@@ -124,15 +124,17 @@ function lxsh.highlighters.new(context)
 
   -- Highlighter function (depends on context and decorator as upvalues). {{{2
 
+  local default_aliases = {
+    email = 'url',
+    number = 'constant',
+    string = 'constant',
+    character = 'string',
+  }
+
   return function(subject, options)
     local output = {}
     local options = type(options) == 'table' and options or {}
-    local aliases = {
-      email = 'url',
-      number = 'constant',
-      string = 'constant',
-      character = 'string',
-    }
+    local aliases = setmetatable(context.aliases or {}, { __index = default_aliases })
     if not options.colors then options.colors = lxsh.colors.earendel end
     subject = subject:gsub('\r\n', '\n')
     for kind, text, url in producer(decorator, subject) do
