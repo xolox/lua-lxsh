@@ -5,7 +5,7 @@
  Authors:
   - Brendan O'Flaherty
   - Peter Odding
- Last Change: September 29, 2011
+ Last Change: September 30, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -33,30 +33,30 @@ local function ic(word)
 end
 
 -- Create a lexer definition context.
-local define, compile = lxsh.lexers.new 'bib'
+local context = lxsh.lexers.new 'bib'
 
 -- Pattern definitions start here.
 
-define('whitespace' , S'\r\n\f\t\v '^1)
+context:define('whitespace' , S'\r\n\f\t\v '^1)
 
 -- Entries.
-define('entry', '@' * (ic'booklet' + ic'article' + ic'book' + ic'conference'
+context:define('entry', '@' * (ic'booklet' + ic'article' + ic'book' + ic'conference'
   + ic'inbook' + ic'incollection' + ic'inproceedings' + ic'manual'
   + ic'mastersthesis' + ic'lambda' + ic'misc' + ic'phdthesis' + ic'proceedings'
   + ic'techreport' + ic'unpublished') * B)
 
 -- Fields.
-define('field', (ic'author' + ic'title' + ic'journal' + ic'year' + ic'volume'
+context:define('field', (ic'author' + ic'title' + ic'journal' + ic'year' + ic'volume'
   + ic'number' + ic'pages' + ic'month' + ic'note' + ic'key' + ic'publisher'
   + ic'editor' + ic'series' + ic'address' + ic'edition' + ic'howpublished'
   + ic'booktitle' + ic'organization' + ic'chapter' + ic'school'
   + ic'institution' + ic'type' + ic'isbn' + ic'issn' + ic'affiliation'
   + ic'issue' + ic'keyword' + ic'url') * B)
 
-define('identifier', (W + '_') * A^0)
+context:define('identifier', (W + '_') * A^0)
 
 -- Character and string literals.
-define('string', '"' * ((1 - P'"'))^0 * '"')
+context:define('string', '"' * ((1 - P'"'))^0 * '"')
 
 -- Numbers (matched before operators because .1 is a number).
 local int = ('0' + (D^1)) * S'lL'^-2
@@ -64,16 +64,18 @@ local flt = ((D^1 * '.' * D^0
             + D^0 * '.' * D^1
             + D^1 * 'e' * D^1) * S'fF'^-1)
             + D^1 * S'fF'
-define('number', flt + int)
+context:define('number', flt + int)
 
 -- Operators.
-define('operator', '=')
+context:define('operator', '=')
 
 -- Delimiters.
-define('delimiter', S',{}')
+context:define('delimiter', S',{}')
 
 -- Define an `error' token kind that consumes one character and enables
 -- the lexer to resume as a last resort for dealing with unknown input.
-define('error', 1)
+context:define('error', 1)
 
-return compile()
+return context:compile()
+
+-- vim: ts=2 sw=2 et
