@@ -3,7 +3,7 @@
  Support for syntax highlighting in HTML for the LXSH module.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: July 18, 2011
+ Last Change: October 4, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
  TODO Tests for the formatters
@@ -122,7 +122,7 @@ function formatter.preamble(default, includeswitcher)
   local template = '<link rel="%s" type="text/css" href="http://peterodding.com/code/lua/lxsh/styles/%s.css" title="%s">'
   local output = {}
   for _, style in ipairs { 'earendel', 'slate', 'wiki' } do
-    local rel = style == default and 'stylesheet' or 'alternate stylesheet'
+    local rel = lxsh.colors[style] == default and 'stylesheet' or 'alternate stylesheet'
     output[#output + 1] = template:format(rel, style, style:gsub('^%w', string.upper))
   end
   if includeswitcher then
