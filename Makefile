@@ -1,7 +1,7 @@
 # Makefile for the Lua LXSH module.
 # 
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 17, 2011
+# Last Change: October 4, 2011
 # URL: http://peterodding.com/code/lua/lxsh/
 
 VERSION = $(shell grep _VERSION src/init.lua | cut "-d'" -f 2)
@@ -28,7 +28,7 @@ examples/%.css: src/colors/%.lua src/init.lua
 package: demo
 	@rm -f $(PACKAGE).zip
 	@mkdir -p $(PACKAGE)/etc
-	@cp -al etc/demo.lua etc/doclinks.lua $(PACKAGE)/etc
+	@cp -al etc/lxsh etc/demo.lua etc/doclinks.lua etc/styleswitcher.js $(PACKAGE)/etc
 	@cp -al examples $(PACKAGE)
 	@cp -al src $(PACKAGE)
 	@cp README.md TODO.md $(PACKAGE)
