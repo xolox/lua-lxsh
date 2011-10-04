@@ -5,7 +5,7 @@
  Command line interface for the LXSH syntax highlighters.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: September 29, 2011
+ Last Change: October 4, 2011
  URL: http://peterodding.com/code/lua/lxsh/
 
 ]]
@@ -20,7 +20,7 @@ function main()
   -- Find the syntax highlighter for the input file's type.
   local intype = fnamext(infile)
   local highlighter = assert(lxsh.highlighters[intype],
-      string.format("Invalid input format '%s'! (expected one of 'c', 'lua', 'bib')", intype))
+      string.format("Invalid input format '%s'! (expected one of 'c', 'lua', 'bib', 'sh')", intype))
   -- Find the formatter for the output file's type.
   local outtype = fnamext(outfile)
   local formatter = assert(lxsh.formatters[outtype],

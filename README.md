@@ -1,6 +1,6 @@
 # LXSH: Lexing & Syntax Highlighting in Lua
 
-LXSH is a collection of [lexers] [lexing] and [syntax highlighters] [highlighting] written in [Lua] [lua] using the excellent pattern-matching library [LPeg] [lpeg]. Two programming languages are currently supported, these are Lua and C. The syntax highlighters support three output formats: [HTML] [html] designed to be easily embedded in web pages, [LaTeX] [latex] which can be used to generate high quality PDF files and [RTF] [rtf] which can be used in graphical text editors like Microsoft Word and LibreOffice (formerly OpenOffice). Three predefined color schemes are included. Here are some examples of the supported input languages, output formats and color schemes:
+LXSH is a collection of [lexers] [lexing] and [syntax highlighters] [highlighting] written in [Lua] [lua] using the excellent pattern-matching library [LPeg] [lpeg]. Several syntaxes are currently supported: Lua, C, BibTeX and shell script. The syntax highlighters support three output formats: [HTML] [html] designed to be easily embedded in web pages, [LaTeX] [latex] which can be used to generate high quality PDF files and [RTF] [rtf] which can be used in graphical text editors like Microsoft Word and LibreOffice (formerly OpenOffice). Three predefined color schemes are included. Here are some examples of the supported input languages, output formats and color schemes:
 
 <table cellspacing=0 cellpadding=4>
  <tr>
@@ -81,6 +81,30 @@ LXSH is a collection of [lexers] [lexing] and [syntax highlighters] [highlightin
    <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/lua_apr.c.rtf">RTF</a>
   </td>
  </tr>
+ <tr>
+  <th style="border-right:1px solid silver; text-align: right">Shell script:</th>
+  <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
+   <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/gvim.sh.html">HTML</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/gvim.sh.pdf">PDF</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/gvim.sh.rtf">RTF</a>
+  </td>
+  <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
+   <a href="http://peterodding.com/code/lua/lxsh/examples/slate/gvim.sh.html">HTML</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/slate/gvim.sh.pdf">PDF</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/slate/gvim.sh.rtf">RTF</a>
+  </td>
+  <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
+   <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/gvim.sh.html">HTML</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/gvim.sh.pdf">PDF</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/gvim.sh.rtf">RTF</a>
+  </td>
+ </tr>
 </table>
 
 As you may have noticed in the above examples, the syntax highlighters replace standard library identifiers (and then some) with hyperlinks to the relevant documentation. You can also try switching between style sheets while staying on the same web page by using your web browser's *View → Page styles* menu (this works using so-called "alternate style sheets").
@@ -102,7 +126,7 @@ If you don't have LuaRocks installed you can [download the latest release] [zipb
 
 ## Usage
 
-If you want to call a lexer or access an LPeg pattern defined by a lexer you can do so as follows (this example demonstrates the Lua lexer but the C lexer works the same):
+If you want to call a lexer or access an LPeg pattern defined by a lexer you can do so as follows (this example demonstrates the Lua lexer but the other lexers work the same way):
 
     > -- Load the LXSH module.
     > require 'lxsh'
@@ -126,7 +150,7 @@ If you want to call a lexer or access an LPeg pattern defined by a lexer you can
     > -- Use one of the patterns defined by the lexer.
     > lxsh.lexers.lua.patterns.comment:match '--[=[ this is a long comment ]=]'
 
-Lexers define the following functions:
+Note that you only need to load the main LXSH module with `require()`, the lexer and highlighter submodules are automatically loaded as they're first used. Lexers define the following functions:
 
  * `lexer.find(subject [, init [, options ]])` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the last matched character
  * `lexer.match(subject [, init [, options ]])` takes a string and optional starting position, matches a single token (anchored) and returns two values: the token kind and the matched text
@@ -177,6 +201,29 @@ The C lexer produces the following tokens:
  * operator
  * preprocessor
  * whitespace
+
+The BibTeX lexer produces the following tokens:
+
+ * entry (e.g. `@Book`)
+ * field (e.g. `author`)
+ * identifier
+ * string
+ * number
+ * operator
+ * delimiter
+ * whitespace
+ * error (invalid input)
+
+The shell script lexer produces the following tokens:
+
+ * comment
+ * number
+ * string
+ * variable
+ * operator
+ * keyword
+ * command
+ * error (invalid input)
 
 ## Contact
 

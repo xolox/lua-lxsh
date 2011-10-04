@@ -3,8 +3,10 @@
  Lexer for shell script code powered by LPeg.
 
  Author: Peter Odding <peter@peterodding.com>
- Last Change: September 30, 2011
+ Last Change: October 4, 2011
  URL: http://peterodding.com/code/lua/lxsh/
+
+ TODO Whitespace? :-P
 
 ]]
 
