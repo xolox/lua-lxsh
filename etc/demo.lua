@@ -50,6 +50,8 @@ for _, formatter in ipairs { lxsh.formatters.html, lxsh.formatters.rtf, lxsh.for
     demo('examples/prompt.lua', 'examples/' .. colors .. '/prompt.lua' .. formatter.extension, lxsh.highlighters.lua)
     -- Highlight example C source code (also from my Lua/APR binding).
     demo('examples/lua_apr.c', 'examples/' .. colors .. '/lua_apr.c' .. formatter.extension, lxsh.highlighters.c)
+    -- Highlight example BibTeX entry (from http://en.wikipedia.org/wiki/BibTeX#Examples).
+    demo('examples/entry.bib', 'examples/' .. colors .. '/entry.bib' .. formatter.extension, lxsh.highlighters.bib)
     -- Highlight example shell script code (something random from my ~/bin).
     demo('examples/gvim.sh', 'examples/' .. colors .. '/gvim.sh' .. formatter.extension, lxsh.highlighters.sh)
   end

@@ -82,6 +82,30 @@ LXSH is a collection of [lexers] [lexing] and [syntax highlighters] [highlightin
   </td>
  </tr>
  <tr>
+  <th style="border-right:1px solid silver; text-align: right">BibTeX:</th>
+  <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
+   <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/entry.bib.html">HTML</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/entry.bib.pdf">PDF</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/entry.bib.rtf">RTF</a>
+  </td>
+  <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
+   <a href="http://peterodding.com/code/lua/lxsh/examples/slate/entry.bib.html">HTML</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/slate/entry.bib.pdf">PDF</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/slate/entry.bib.rtf">RTF</a>
+  </td>
+  <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
+   <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/entry.bib.html">HTML</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/entry.bib.pdf">PDF</a>
+   <span style="color: silver">·</span>
+   <a href="http://peterodding.com/code/lua/lxsh/examples/wiki/entry.bib.rtf">RTF</a>
+  </td>
+ </tr>
+ <tr>
   <th style="border-right:1px solid silver; text-align: right">Shell script:</th>
   <td style="border-right: 1px solid silver; border-bottom: 1px solid silver">
    <a href="http://peterodding.com/code/lua/lxsh/examples/earendel/gvim.sh.html">HTML</a>
