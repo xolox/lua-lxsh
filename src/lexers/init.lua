@@ -35,7 +35,7 @@ local function compile_keywords(context, keywords)
     pattern = pattern and (pattern + p) or p
   end
   local B = context.word_boundary or B
-  local BB = lpeg.B(B, 1) + SOS -- starting boundary
+  local BB = lpeg.P(B, 1) + SOS -- starting boundary
   local AB = B + EOS -- ending boundary
   return BB * pattern * AB
 end
