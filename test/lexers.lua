@@ -235,6 +235,67 @@ check_tokens(lxsh.lexers.lua.gmatch(keywords), {
   { 'keyword', 'while' },
 })
 
+-- Keywords II. {{{2
+local code_with_keywords = [[if true and not false or nil then
+  repeat
+    break
+  until true
+elseif 1 then
+  local a = 1
+else
+  for k, v in pairs(_G) do
+    local f = function()  end
+  end
+end
+
+while true do end
+
+return 1]]
+
+check_tokens(lxsh.lexers.lua.gmatch(code_with_keywords), {
+  { 'keyword', 'if' }, { 'whitespace', ' ' },
+  { 'constant', 'true' }, { 'whitespace', ' ' },
+  { 'operator', 'and' }, { 'whitespace', ' ' },
+  { 'operator', 'not' }, { 'whitespace', ' ' },
+  { 'constant', 'false' }, { 'whitespace', ' ' },
+  { 'operator', 'or' }, { 'whitespace', ' ' },
+  { 'constant', 'nil' }, { 'whitespace', ' ' },
+  { 'keyword', 'then' }, { 'whitespace', '\n  ' },
+  { 'keyword', 'repeat' }, { 'whitespace', '\n    ' },
+  { 'keyword', 'break' }, { 'whitespace', '\n  ' },
+  { 'keyword', 'until' }, { 'whitespace', ' ' },
+  { 'constant', 'true' }, { 'whitespace', '\n' },
+  { 'keyword', 'elseif' }, { 'whitespace', ' ' },
+  { 'number', '1' }, { 'whitespace', ' ' },
+  { 'keyword', 'then' }, { 'whitespace', '\n  ' },
+  { 'keyword', 'local' }, { 'whitespace', ' ' },
+  { 'identifier', 'a' }, { 'whitespace', ' ' },
+  { 'operator', '=' }, { 'whitespace', ' ' },
+  { 'number', '1' }, { 'whitespace', '\n' },
+  { 'keyword', 'else' }, { 'whitespace', '\n  ' },
+  { 'keyword', 'for' }, { 'whitespace', ' ' },
+  { 'identifier', 'k' }, { 'operator', ',' }, { 'whitespace', ' ' },
+  { 'identifier', 'v' }, { 'whitespace', ' ' },
+  { 'keyword', 'in' }, { 'whitespace', ' ' },
+  { 'identifier', 'pairs' }, { 'operator', '(' }, { 'identifier', '_G' },
+    { 'operator', ')' }, { 'whitespace', ' ' },
+  { 'keyword', 'do' }, { 'whitespace', '\n    ' },
+  { 'keyword', 'local' }, { 'whitespace', ' ' },
+  { 'identifier', 'f' }, { 'whitespace', ' ' },
+  { 'operator', '=' }, { 'whitespace', ' ' },
+  { 'keyword', 'function' }, { 'operator', '(' }, { 'operator', ')' },
+    { 'whitespace', '  ' },
+  { 'keyword', 'end' }, { 'whitespace', '\n  ' },
+  { 'keyword', 'end' }, { 'whitespace', '\n' },
+  { 'keyword', 'end' }, { 'whitespace', '\n\n' },
+  { 'keyword', 'while' }, { 'whitespace', ' ' },
+  { 'constant', 'true' }, { 'whitespace', ' ' },
+  { 'keyword', 'do' }, { 'whitespace', ' ' },
+  { 'keyword', 'end' }, { 'whitespace', '\n\n' },
+  { 'keyword', 'return' }, { 'whitespace', ' ' },
+  { 'number', '1' },
+})
+
 -- Identifiers. {{{2
 check_tokens(lxsh.lexers.lua.gmatch('io.write'), {
   { 'identifier', 'io' },
